@@ -1,8 +1,8 @@
-# The Butterfly Network Source-Available Licence
+# The Estrogen Source-Available Licence
 
 **Version 1.2**
 
-Copyright © 2025 The Butterfly Network.
+Copyright © 2025 CloveTwilight3.
 
 ---
 
@@ -18,7 +18,7 @@ Non-commercial use includes personal use, academic use, research, experimentatio
 
 All copies or substantial portions of the Software must include the above copyright notice and this licence.
 
-Attribution to “The Butterfly Network” must be maintained in a reasonable and visible manner in source distributions and accompanying documentation.
+Attribution to “CloveTwilight3” must be maintained in a reasonable and visible manner in source distributions and accompanying documentation.
 
 ---
 
@@ -26,13 +26,13 @@ Attribution to “The Butterfly Network” must be maintained in a reasonable an
 
 You may not misrepresent the origin of the Software.
 
-Modified versions must be clearly identified as such and must not be presented as being made, endorsed, or distributed by The Butterfly Network without prior written permission.
+Modified versions must be clearly identified as such and must not be presented as being made, endorsed, or distributed by CloveTwilight3 without prior written permission.
 
 ---
 
 ## 3. Commercial Use Restriction
 
-The Software may not be used, in whole or in part, for any commercial purpose without a separate, written commercial licence granted by The Butterfly Network.
+The Software may not be used, in whole or in part, for any commercial purpose without a separate, written commercial licence granted by CloveTwilight3.
 
 Commercial use includes, but is not limited to:
 
@@ -47,7 +47,7 @@ Commercial licensing terms, including upfront fees and/or revenue-sharing arrang
 
 ## 4. Trademarks
 
-This licence does not grant permission to use any trademarks, trade names, service marks, or logos of The Butterfly Network or its contributors.
+This licence does not grant permission to use any trademarks, trade names, service marks, or logos associated with CloveTwilight3.
 
 “Doughmination System®” is a registered trademark in the United Kingdom. Use of this trademark in connection with the Software, derivative works, or any related products or services requires express written authorisation from the trademark owner.
 
