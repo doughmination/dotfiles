@@ -49,7 +49,7 @@ Commercial licensing terms, including upfront fees and/or revenue-sharing arrang
 
 This licence does not grant permission to use any trademarks, trade names, service marks, or logos associated with CloveTwilight3.
 
-“Doughmination System®” is a registered trademark in the United Kingdom. Use of this trademark in connection with the Software, derivative works, or any related products or services requires express written authorisation from the trademark owner.
+“Doughmination System®” is a registered trademark in the United Kingdom [UK00004263144]. Use of this trademark in connection with the Software, derivative works, or any related products or services requires express written authorisation from the trademark owner.
 
 ---
 
