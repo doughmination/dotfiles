@@ -59,12 +59,14 @@ alias la='ls -A'
 alias l='ls -CF'
 
 # Custom Aliases
-alias sch='echo "connecting" && ssh clove@clovetwilight3.co.uk -p 2525'
+alias sch='echo "Connecting..." && ssh clove@clovetwilight3.co.uk -p 2525'
 alias webtest='rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'
 alias clreload='git pull && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose logs -f'
 alias webreload='git pull && docker compose pull && docker compose up -d'
 alias cdd='cd'
 alias bashedit='nano ~/.zshrc'
+alias bashreload='source ~/.zshrc'
+alias sgh='echo "Connecting..." && ssh clove@girlsnetwork.dev -p 420'
 
 # Alert alias (macOS uses different notification system)
 # Note: requires terminal-notifier or similar tool
@@ -82,7 +84,12 @@ fi
 autoload -Uz compinit
 compinit
 
-# Run neofetch on terminal start
-if command -v neofetch >/dev/null 2>&1; then
-    neofetch
+# Run hyfetch on terminal start
+if command -v hyfetch >/dev/null 2>&1; then
+    hyfetch
 fi
+
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
