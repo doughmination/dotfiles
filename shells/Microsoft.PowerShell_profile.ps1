@@ -89,47 +89,21 @@ function grep {
     }
 }
 
-# SSH connection with animated spinner
-function Invoke-SSHConnect {
-    param([string[]]$Command)
-    
-    $spinChars = @('⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏')
-    Write-Host "Connecting... " -NoNewline
-    
-    # Start SSH as background job
-    $job = Start-Job -ScriptBlock {
-        param($cmd)
-        & $cmd[0] $cmd[1..$cmd.Length]
-    } -ArgumentList @(,$Command)
-    
-    # Animate while connecting
-    $i = 0
-    while ($job.State -eq 'Running') {
-        Write-Host "[$($spinChars[$i % $spinChars.Length])]" -NoNewline
-        Start-Sleep -Milliseconds 100
-        Write-Host "`b`b`b" -NoNewline
-        $i++
-    }
-    
-    # Clear animation
-    Write-Host "`b`b`b`b`b`b`b`b`b`b`b`b`b`b`b               `r" -NoNewline
-    
-    # Get job results
-    $result = Receive-Job -Job $job -Wait -AutoRemoveJob
-    return $result
-}
-
-# Custom Aliases
+# Custom Aliases - Simple connecting message
+# Note: PowerShell doesn't handle SSH animations well due to terminal I/O conflicts
 function sch {
-    Invoke-SSHConnect -Command @('ssh', 'clove@clovetwilight3.co.uk', '-p', '2525')
+    Write-Host "Connecting..." -ForegroundColor Cyan
+    ssh clove@clovetwilight3.co.uk -p 2525
 }
 
 function sgh {
-    Invoke-SSHConnect -Command @('ssh', 'clove@girlsnetwork.dev', '-p', '420')
+    Write-Host "Connecting..." -ForegroundColor Cyan
+    ssh clove@girlsnetwork.dev -p 420
 }
 
 function soh {
-    Invoke-SSHConnect -Command @('ssh', 'clovid@play.somc.club', '-p', '2022')
+    Write-Host "Connecting..." -ForegroundColor Cyan
+    ssh clovid@play.somc.club -p 2022
 }
 
 function webtest {
