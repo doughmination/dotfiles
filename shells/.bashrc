@@ -113,26 +113,22 @@ alias l='ls -CF'
 
 # SSH connection with animated spinner
 ssh_connect() {
-    local delay=0.1
     local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
     printf "Connecting... "
     
-    # Start SSH in background
-    "$@" &
-    local pid=$!
-    
-    # Animate while connecting
-    while kill -0 $pid 2>/dev/null; do
-        local temp=${spinstr#?}
-        printf "[%c]" "$spinstr"
-        spinstr=$temp${spinstr%"$temp"}
-        sleep $delay
-        printf "\b\b\b"
+    # Brief animation before connecting
+    for i in {1..5}; do
+        for ((j=0; j<${#spinstr}; j++)); do
+            printf "[%s]" "${spinstr:$j:1}"
+            sleep 0.05
+            printf "\b\b\b"
+        done
     done
     
-    # Clear animation
-    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b               \r"
-    wait $pid
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b               \r"
+    
+    # Now run SSH in foreground
+    "$@"
 }
 
 # Custom Aliases
