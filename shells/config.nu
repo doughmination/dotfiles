@@ -57,9 +57,21 @@ alias ll = ls -la
 alias la = ls -a
 alias l = ls
 
+# SSH connect with animation
+def ssh_connect [host: string port: string user: string] {
+    let spinstr = ['⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏']
+    print -n "Connecting... "
+    
+    # Start SSH in background (Nushell doesn't support true background jobs like bash)
+    # So we'll just show a simple message
+    print ""
+    ssh $"($user)@($host)" -p $port
+}
+
 # Custom aliases
-alias sch = ssh clove@clovetwilight3.co.uk -p 2525
-alias sgh = ssh clove@girlsnetwork.dev -p 420
+alias sch = ssh_connect clovetwilight3.co.uk 2525 clove
+alias sgh = ssh_connect girlsnetwork.dev 420 clove
+alias soh = ssh_connect play.somc.club 2022 clovid
 
 # Complex aliases as custom commands
 def webtest [] {

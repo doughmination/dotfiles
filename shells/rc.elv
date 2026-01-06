@@ -42,6 +42,27 @@ fn git-prompt {
     }
 }
 
+# SSH connect with animation
+fn ssh-connect {|@args|
+    var spinstr = ['⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏']
+    print "Connecting... "
+    
+    # Start SSH in background
+    var ssh-pid = (e:ssh $@args &)
+    
+    # Animate while connecting
+    while (kill -0 $ssh-pid 2>/dev/null) {
+        for spin $spinstr {
+            print "["$spin"]"
+            sleep 0.1s
+            print "\b\b\b"
+        }
+    }
+    
+    # Clear animation
+    print "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b               \r"
+}
+
 # Custom prompt
 set edit:prompt = {
     var user = (whoami | slurp | str:trim-space (one))
@@ -67,13 +88,15 @@ fn l {|@a| e:ls -CF $@a }
 
 # Custom aliases
 fn sch {
-    echo "Connecting..."
-    e:ssh clove@clovetwilight3.co.uk -p 2525
+    ssh-connect clove@clovetwilight3.co.uk -p 2525
 }
 
 fn sgh {
-    echo "Connecting..."
-    e:ssh clove@girlsnetwork.dev -p 420
+    ssh-connect clove@girlsnetwork.dev -p 420
+}
+
+fn soh {
+    ssh-connect clovid@play.somc.club -p 2022
 }
 
 fn webtest {

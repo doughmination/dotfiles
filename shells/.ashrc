@@ -52,9 +52,10 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Custom Aliases
-alias sch='echo "Connecting..." && ssh clove@clovetwilight3.co.uk -p 2525'
-alias sgh='echo "Connecting..." && ssh clove@girlsnetwork.dev -p 420'
+# Custom Aliases (Note: dash/ash has limited animation support)
+alias sch='printf "Connecting...\n" && ssh clove@clovetwilight3.co.uk -p 2525'
+alias sgh='printf "Connecting...\n" && ssh clove@girlsnetwork.dev -p 420'
+alias soh='printf "Connecting...\n" && ssh clovid@play.somc.club -p 2022'
 alias webtest='rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'
 alias clreload='git pull && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose logs -f'
 alias webreload='git pull && docker compose pull && docker compose up -d'

@@ -58,15 +58,40 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
+# SSH connection with animated spinner
+ssh_connect() {
+    local delay=0.1
+    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    printf "Connecting... "
+    
+    # Start SSH in background
+    "$@" &
+    local pid=$!
+    
+    # Animate while connecting
+    while kill -0 $pid 2>/dev/null; do
+        local temp=${spinstr:0:1}
+        printf "[%s]" "$temp"
+        spinstr="${spinstr:1}$temp"
+        sleep $delay
+        printf "\b\b\b"
+    done
+    
+    # Clear animation
+    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b               \r"
+    wait $pid
+}
+
 # Custom Aliases
-alias sch='echo "Connecting..." && ssh clove@clovetwilight3.co.uk -p 2525'
+alias sch='ssh_connect ssh clove@clovetwilight3.co.uk -p 2525'
+alias sgh='ssh_connect ssh clove@girlsnetwork.dev -p 420'
+alias soh='ssh_connect ssh clovid@play.somc.club -p 2022'
 alias webtest='rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'
 alias clreload='git pull && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose logs -f'
 alias webreload='git pull && docker compose pull && docker compose up -d'
 alias cdd='cd'
 alias bashedit='nano ~/.zshrc'
 alias bashreload='source ~/.zshrc'
-alias sgh='echo "Connecting..." && ssh clove@girlsnetwork.dev -p 420'
 
 # Alert alias (macOS uses different notification system)
 # Note: requires terminal-notifier or similar tool
