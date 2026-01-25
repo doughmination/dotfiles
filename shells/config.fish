@@ -67,7 +67,7 @@ function ssh_connect
 end
 
 # Custom Aliases
-alias sch='ssh_connect ssh clove@clovetwilight3.co.uk -p 2525'
+alias sch='ssh_connect ssh clove@clovetwilight3.co.uk -p 420'
 alias sgh='ssh_connect ssh clove@girlsnetwork.dev -p 420'
 alias soh='ssh_connect ssh clovid@play.somc.club -p 2022'
 alias webtest='rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'
