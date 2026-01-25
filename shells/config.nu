@@ -69,7 +69,7 @@ def ssh_connect [host: string port: string user: string] {
 }
 
 # Custom aliases
-alias sch = ssh_connect clovetwilight3.co.uk 2525 clove
+alias sch = ssh_connect clovetwilight3.co.uk 420 clove
 alias sgh = ssh_connect girlsnetwork.dev 420 clove
 alias soh = ssh_connect play.somc.club 2022 clovid
 
