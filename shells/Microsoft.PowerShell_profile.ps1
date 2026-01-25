@@ -5,6 +5,11 @@
 # Custom prompt colors using ANSI escape codes
 # Note: `e escape sequence requires PowerShell 6.0+
 # For PowerShell 5.1, use $([char]27) instead
+
+# Clear banner
+Clear-Host
+
+# Colors
 $ESC = [char]27
 $PINK = "$ESC[38;5;205m"
 $PURPLE = "$ESC[38;5;135m"
@@ -93,7 +98,7 @@ function grep {
 # Note: PowerShell doesn't handle SSH animations well due to terminal I/O conflicts
 function sch {
     Write-Host "Connecting..." -ForegroundColor Cyan
-    ssh clove@clovetwilight3.co.uk -p 2525
+    ssh clove@clovetwilight3.co.uk -p 420
 }
 
 function sgh {
