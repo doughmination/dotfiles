@@ -170,3 +170,20 @@ fi
 if command -v hyfetch >/dev/null 2>&1; then
     hyfetch
 fi
+
+# Login to last dir
+# File to store last directory
+export LASTDIR="$HOME/.lastdir"
+
+# Restore last directory on login (only if it still exists)
+if [[ -f "$LASTDIR" ]] && [[ -d "$(cat "$LASTDIR")" ]]; then
+  cd "$(cat "$LASTDIR")"
+fi
+
+# Save directory on every prompt
+save_lastdir() {
+  pwd > "$LASTDIR"
+}
+
+PROMPT_COMMAND="save_lastdir${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+
