@@ -44,7 +44,7 @@ alias fgrep 'fgrep --color=auto'
 alias egrep 'egrep --color=auto'
 
 # Custom Aliases (Note: tcsh has limited background job support for animation)
-alias sch 'echo "Connecting..." && ssh clove@clovetwilight3.co.uk -p 420'
+alias sch 'echo "Connecting..." && ssh clove@ssh.doughmination.win -p 420'
 alias sgh 'echo "Connecting..." && ssh clove@girlsnetwork.dev -p 420'
 alias soh 'echo "Connecting..." && ssh clovid@play.somc.club -p 2022'
 alias webtest 'rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'

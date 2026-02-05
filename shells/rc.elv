@@ -88,7 +88,7 @@ fn l {|@a| e:ls -CF $@a }
 
 # Custom aliases
 fn sch {
-    ssh-connect clove@clovetwilight3.co.uk -p 420
+    ssh-connect clove@ssh.doughmination.win -p 420
 }
 
 fn sgh {

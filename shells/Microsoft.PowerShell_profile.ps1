@@ -98,7 +98,7 @@ function grep {
 # Note: PowerShell doesn't handle SSH animations well due to terminal I/O conflicts
 function sch {
     Write-Host "Connecting..." -ForegroundColor Cyan
-    ssh clove@clovetwilight3.co.uk -p 420
+    ssh clove@ssh.doughmination.win -p 420
 }
 
 function sgh {

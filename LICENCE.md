@@ -55,7 +55,7 @@ Any individual or organisation wishing to use the Software for a commercial purp
 
 Requests for commercial licensing must be made via email to:
 
-**[admin@clovelib.win](mailto:admin@clovelib.win)**
+**[admin@doughmination.win](mailto:admin@doughmination.win)**
 
 Commercial licence terms may include fees, revenue-sharing arrangements, usage limitations, or other conditions, and are granted solely at the discretion of Clove Nytrix Doughmination Twilight.
 
