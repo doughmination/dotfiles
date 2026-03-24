@@ -132,13 +132,6 @@ ssh_connect() {
 }
 
 # Custom Aliases
-alias sch='ssh_connect ssh clove@ssh.doughmination.win -p 420'
-alias sgh='ssh_connect ssh clove@girlsnetwork.dev -p 420'
-alias soh='ssh_connect ssh clovid@play.somc.club -p 2022'
-alias webtest='rm -rf ~/weblocal/* ~/weblocal/.[!.]* ~/weblocal/..?* && cp -a ~/girlsnetwork.dev/src/. ~/weblocal/ && echo "Synced!"'
-alias clreload='git pull && docker compose build --no-cache && docker compose down && docker compose up -d && docker compose logs -f'
-alias webreload='git pull && docker compose pull && docker compose up -d'
-alias cdd='cd'
 alias bashedit='nano ~/.bashrc'
 alias bashreload='source ~/.bashrc'
 
