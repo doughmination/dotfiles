@@ -1,0 +1,10 @@
+dwarfs
+envycontrol
+gearlever
+google-chrome
+jetbrains-toolbox
+spotify
+vmware-keymaps
+vmware-workstation
+webapp-manager
+yay-bin
