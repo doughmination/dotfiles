@@ -106,47 +106,21 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
-# some more ls aliases
+# some ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
-# SSH connection with animated spinner
-ssh_connect() {
-    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-    printf "Connecting... "
-    
-    # Brief animation before connecting
-    for i in {1..5}; do
-        for ((j=0; j<${#spinstr}; j++)); do
-            printf "[%s]" "${spinstr:$j:1}"
-            sleep 0.05
-            printf "\b\b\b"
-        done
-    done
-    
-    printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b               \r"
-    
-    # Now run SSH in foreground
-    "$@"
-}
-
-# Custom Aliases
+# Custom
 alias bashedit='nano ~/.bashrc'
 alias bashreload='source ~/.bashrc'
+alias boop='sudo'
+alias archeon='sudo pacman'
+alias sgh='ssh clove@shell.doughmination.win -p 421 -i ~/.ssh/main'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
@@ -180,3 +154,7 @@ save_lastdir() {
 
 PROMPT_COMMAND="save_lastdir${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
