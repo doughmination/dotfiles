@@ -131,7 +131,7 @@ PACMAN_PKGS=(
   sddm smartmontools steam sudo testdisk vim vlc vulkan-intel vulkan-nouveau
   vulkan-radeon wget wireless_tools wpa_supplicant xdg-utils
   xf86-video-amdgpu xf86-video-ati xf86-video-nouveau xorg-server xorg-xinit
-  zenith zram-generator
+  zenith zram-generator noto-fonts-emoji noto-fonts-cjk sbctl
 )
 
 # yay is omitted on purpose — it's built from source in install_yay().
