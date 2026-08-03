@@ -138,6 +138,12 @@ function cdd {
     Set-Location $Path
 }
 
+# Clone a doughmination repo by name (ported from zsh)
+function doughclone {
+    param([Parameter(Mandatory=$true)][string]$RepoName)
+    git clone "https://github.com/doughmination/$RepoName"
+}
+
 # Profile management
 function bashedit {
     if (Test-Path $PROFILE) {
@@ -159,6 +165,18 @@ if (Get-Module -ListAvailable -Name Get-ChildItemColor) {
     Import-Module Get-ChildItemColor
     Set-Alias -Name ls -Value Get-ChildItemColor -Force
 }
+
+# bun (ported from zsh)
+$env:BUN_INSTALL = "$HOME\.bun"
+$env:PATH = "$env:BUN_INSTALL\bin;$env:PATH"
+
+# local bin equivalent (ported from zsh's ~/.local/bin, only added if present)
+if (Test-Path "$HOME\.local\bin") {
+    $env:PATH = "$HOME\.local\bin;$env:PATH"
+}
+
+# Android SDK platform-tools (ported from zsh, macOS path — adjust for this machine)
+# $env:PATH = "$env:PATH;$HOME\AppData\Local\Android\Sdk\platform-tools"
 
 # Run hyfetch on terminal start (if installed and available)
 if (Get-Command hyfetch -ErrorAction SilentlyContinue) {
