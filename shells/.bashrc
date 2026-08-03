@@ -27,6 +27,9 @@ shopt -s checkwinsize
 # match all files and zero or more directories and subdirectories.
 #shopt -s globstar
 
+# Extended globbing (ported from zsh's EXTENDED_GLOB)
+shopt -s extglob
+
 # make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
@@ -118,6 +121,16 @@ alias boop='sudo'
 alias archeon='sudo pacman'
 alias sgh='ssh clove@shell.doughmination.win -p 421 -i ~/.ssh/main'
 
+# Clone a doughmination repo by name (ported from zsh)
+doughclone() {
+  git clone "https://github.com/doughmination/$1"
+}
+
+# Load custom aliases if they exist (ported from zsh's .zsh_aliases pattern)
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
@@ -158,3 +171,15 @@ PROMPT_COMMAND="save_lastdir${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# bun (ported from zsh)
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"  # bun completions
+
+# local bin (ported from zsh)
+export PATH="$HOME/.local/bin:$PATH"
+
+# Android SDK platform-tools (ported from zsh, macOS path — adjust for this machine)
+# export PATH="$PATH:~/.android-sdk-macosx/platform-tools/"
+# export PATH="$PATH:$HOME/Android/Sdk/platform-tools/"   # typical Linux path
