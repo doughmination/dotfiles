@@ -125,3 +125,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # local bin (ported from zsh)
 export PATH="$HOME/.local/bin:$PATH"
+
+# Load a venv
+source ~/venv/bin/activate
