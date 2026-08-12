@@ -2,8 +2,8 @@
     // ==========================================
     // Appearance
     // ==========================================
-    "workbench.colorTheme": "Catppuccin Mocha",
-    "workbench.iconTheme": "catppuccin-mocha",
+    "workbench.colorTheme": "Activate SCARLET protocol (beta)",
+    "workbench.iconTheme": "catppuccin-macchiato",
     "window.zoomLevel": -1,
     "window.commandCenter": true,
     "window.nativeTabs": true,
@@ -27,20 +27,6 @@
     "git.autoRepositoryDetection": "subFolders",
     "git.openRepositoryInParentFolders": "never",
     "git.detectSubmodules": true,
-    // ==========================================
-    // Live Server
-    // ==========================================
-    "liveServer.settings.port": 5050,
-    "liveServer.settings.donotShowInfoMsg": true,
-    "liveServer.settings.donotVerifyTags": true,
-    // ==========================================
-    // WakaTime
-    // ==========================================
-    "wakatime.apiKey": "REPLACE_WITH_NEW_KEY",
-    // ==========================================
-    // Misc
-    // ==========================================
-    "ridiculousCoding.explosions": false,
     // ==========================================
     // Unicode
     // ==========================================

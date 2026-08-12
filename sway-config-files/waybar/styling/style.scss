@@ -1,0 +1,310 @@
+@use "sass:color";
+
+$yellow: #FFFC58;
+$blue: #00FFC8;
+$green: #00FF9C;
+
+* {
+  border: none;
+  border-radius: 14px;
+  font-family: "feather", "DaddyTimeMono Nerd Font";
+  font-size: 16px;
+  min-height: 10px;
+}
+
+window#waybar {
+  background-color: rgba(18, 11, 16, 0.6);
+  border: 1.5px solid #FF0055;
+}
+
+#backlight {
+  color: $yellow;
+  margin: 0px 10px 0px 10px;
+  font-size: 18px;
+}
+
+#backlight-slider trough highlight {
+  background-image: linear-gradient(to right, $yellow 30%, #FF4081 50%, #FFFC58 5000%);
+  border-radius: 10px;
+}
+
+#pulseaudio {
+  color: $blue;
+  margin: 0px 10px 0px 10px;
+  font-size: 18px;
+}
+
+#pulseaudio.muted {
+  color: #FF4081;
+  margin: 0px 15px 0px 10px;
+}
+
+#pulseaudio-slider trough highlight {
+  background-image: linear-gradient(to right, $blue 30%, #0DCDCD 50%, #76C1FF 5000%);
+  border-radius: 10px;
+}
+
+scale trough {
+  all: unset;
+  background-color: #1F1520;
+  box-shadow: 0 2px 3px 2px #000000;
+  border-radius: 16px;
+  min-height: 10px;
+  min-width: 90px;
+  margin: 0px 5px 0px 0px;
+}
+
+scale slider {
+  background-image: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+#network {
+  color: $blue;
+  font-size: 18px;
+  border-radius: 100%;
+  margin: 0px 10px 0px 5px;
+}
+
+#network.disconnected {
+  color: #FF4081;
+}
+
+#custom-essid {
+  font-size: 14px;
+  border-radius: 100%;
+  color: $blue;
+  margin: 1px 5px 0px 5px;
+}
+
+#custom-separator {
+  font-weight: bold;
+  font-size: 27px;
+  color: #33203A;
+}
+
+#custom-ram {
+  border-radius: 16px;
+  margin: 0px 5px 0px 10px;
+  font-size: 22px;
+  color: #FF4081;
+}
+
+#battery {
+  border-radius: 16px;
+  margin: 0px 10px 0px 5px;
+  font-size: 22px;
+  color: $green;
+}
+
+#custom-clock-minutes,
+#custom-clock-hours {
+  font-size: 23px;
+}
+
+#custom-clock-hours {
+  font-weight: bold;
+  margin: 0px 5px 0px -3px;
+  color: #C0AECF;
+}
+
+#custom-clock-minutes {
+  margin: 0px 10px 0px 3px;
+  color: #C0AECF;
+}
+
+#custom-clock-separator {
+  font-size: 20px;
+  color: #C0AECF;
+  margin: 0px 4px 1px 4px;
+}
+
+#custom-date {
+  font-size: 18px;
+  margin: 0px 20px 0px -1px;
+  color: #FF4081;
+}
+
+#custom-music-symbol {
+  color: #FF4081;
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+#custom-music {
+  color: #C592FF;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#custom-prev,
+#custom-next {
+  color: $blue;
+  font-size: 22px;
+  margin: 3px 8px 0px 8px;
+}
+
+#custom-prev {
+  margin: 3px 8px 0px 5px;
+}
+
+
+#custom-play-pause {
+  color: #00FFC8;
+  font-size: 24px;
+  margin: 3px 8px 0px 8px;
+}
+
+#workspaces {
+  font-size: 27px;
+  font-weight: bold;
+  margin: 0px 0px 0px 6px;
+}
+
+#workspaces button {
+  background: transparent;
+  margin: 0px 5px 0px 0px;
+  color: $yellow;
+}
+
+#workspaces button.focused {
+  background: transparent;
+  color: $yellow;
+}
+
+#tray {
+  margin: 0px 10px 0px 5px;
+}
+
+/* ==================== NEON MOTION ==================== */
+/* GTK3 CSS. Animatable here: color, background-color,
+   border-color, text-shadow, box-shadow, opacity, margin. */
+
+/* --- 1. Nothing snaps: everything eases --- */
+* {
+  transition: color 200ms ease-in-out,
+              background-color 200ms ease-in-out,
+              border-color 200ms ease-in-out,
+              text-shadow 250ms ease-in-out,
+              box-shadow 250ms ease-in-out;
+}
+
+/* --- 2. Ambient: the bar's edge breathes red -> pink --- */
+@keyframes bar-breathe {
+  from { border-color: #FF0055; box-shadow: inset 0 0 6px rgba(255, 0, 85, 0.35); }
+  to   { border-color: #FF4081; box-shadow: inset 0 0 14px rgba(255, 64, 129, 0.6); }
+}
+
+window#waybar {
+  animation: bar-breathe 6s ease-in-out infinite alternate;
+}
+
+/* --- 3. Hover: modules ignite --- */
+#backlight:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #FFFC58, 0 0 20px #FFFC58;
+}
+
+#pulseaudio:hover,
+#network:hover,
+#custom-essid:hover,
+#custom-prev:hover,
+#custom-next:hover,
+#custom-play-pause:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #00FFC8, 0 0 20px #00FFC8;
+}
+
+#custom-ram:hover,
+#custom-date:hover,
+#custom-music-symbol:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #FF4081, 0 0 20px #FF4081;
+}
+
+#battery:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #00FF9C, 0 0 20px #00FF9C;
+}
+
+#custom-music:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #C592FF, 0 0 20px #C592FF;
+}
+
+#custom-clock-hours:hover,
+#custom-clock-minutes:hover,
+#custom-clock-separator:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #FF0055, 0 0 20px #FF0055;
+}
+
+#tray:hover {
+  background-color: rgba(255, 0, 85, 0.15);
+}
+
+/* --- 4. The clock colon blinks like a transit board --- */
+@keyframes colon-blink {
+  0%   { color: #FF0055; text-shadow: 0 0 10px #FF0055; }
+  48%  { color: #FF0055; text-shadow: 0 0 10px #FF0055; }
+  52%  { color: #55465F; text-shadow: none; }
+  98%  { color: #55465F; text-shadow: none; }
+  100% { color: #FF0055; text-shadow: 0 0 10px #FF0055; }
+}
+
+#custom-clock-separator {
+  animation: colon-blink 2s linear infinite;
+}
+
+/* --- 5. Alarms: battery, mute, and dropped links pulse --- */
+@keyframes pulse-critical {
+  from { color: #FF0055; text-shadow: 0 0 6px #FF0055; }
+  to   { color: #FFFFFF; text-shadow: 0 0 18px #FF0055, 0 0 28px #FF0055; }
+}
+
+@keyframes pulse-warning {
+  from { color: #FFFC58; text-shadow: none; }
+  to   { color: #FFFFFF; text-shadow: 0 0 14px #FFFC58; }
+}
+
+#battery.critical:not(.charging) {
+  animation: pulse-critical 900ms ease-in-out infinite alternate;
+}
+
+#battery.warning:not(.charging) {
+  animation: pulse-warning 2s ease-in-out infinite alternate;
+}
+
+#pulseaudio.muted,
+#network.disconnected {
+  animation: pulse-critical 1.4s ease-in-out infinite alternate;
+}
+
+/* --- 6. Workspaces: focused one glows and lifts --- */
+#workspaces button {
+  transition: color 250ms ease-in-out,
+              text-shadow 250ms ease-in-out,
+              margin 200ms ease-in-out;
+}
+
+#workspaces button:hover {
+  color: #FFFFFF;
+  text-shadow: 0 0 10px #FFFC58;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+  color: #FF0055;
+  text-shadow: 0 0 8px #FF0055, 0 0 16px #FF0055;
+  margin: -1px 5px 1px 0px;
+}
+
+#workspaces button.urgent {
+  animation: pulse-critical 700ms ease-in-out infinite alternate;
+}

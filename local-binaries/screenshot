@@ -1,0 +1,100 @@
+#!/bin/bash
+# Wayland screenshot wrapper (grim + slurp + wl-copy).
+# Replaces archy-screenshot, which is X11-only and cannot capture under sway.
+#
+#   screenshot            fullscreen -> file
+#   screenshot -s         region     -> file
+#   screenshot -c         fullscreen -> clipboard
+#   screenshot -s -c      region     -> clipboard
+#   screenshot -w         focused window -> file
+#   screenshot -o FILE    explicit output path
+
+set -uo pipefail
+
+DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+OUTFILE=""
+REGION=
+WINDOW=
+COPY=
+NOTIFY=1
+
+usage() {
+    echo "Usage: $0 [-s|--region] [-w|--activewindow] [-c|--copy] [-o|--output FILE] [-n|--no-notify]" >&2
+    exit 1
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -s|--region|--select) REGION=1 ;;
+        -w|--activewindow|--window) WINDOW=1 ;;
+        -c|--copy) COPY=1 ;;
+        -n|--no-notify) NOTIFY= ;;
+        -o|--output)
+            shift; [ $# -gt 0 ] || { echo "Missing file path" >&2; exit 1; }
+            OUTFILE="$1" ;;
+        -h|--help) usage ;;
+        *) echo "Invalid argument $1" >&2; usage ;;
+    esac
+    shift
+done
+
+note() {
+    [ -n "$NOTIFY" ] || return 0
+    notify-send --app-name=screenshot "$1" "$2" || true
+}
+
+# Geometry of the focused sway container, as grim expects it.
+read -r -d '' FOCUSED_RECT_PY <<'PY'
+import json, sys
+
+def walk(node):
+    if node.get("focused"):
+        return node["rect"]
+    for key in ("nodes", "floating_nodes"):
+        for child in node.get(key, []):
+            found = walk(child)
+            if found:
+                return found
+    return None
+
+rect = walk(json.load(sys.stdin))
+if rect is None:
+    sys.exit(1)
+print("{},{} {}x{}".format(rect["x"], rect["y"], rect["width"], rect["height"]))
+PY
+
+GEOM=
+if [ -n "$REGION" ]; then
+    GEOM=$(slurp -d) || exit 1
+    [ -n "$GEOM" ] || exit 1
+elif [ -n "$WINDOW" ]; then
+    GEOM=$(swaymsg -t get_tree | python3 -c "$FOCUSED_RECT_PY") || exit 1
+fi
+
+grim_to() {
+    if [ -n "$GEOM" ]; then grim -g "$GEOM" "$1"; else grim "$1"; fi
+}
+
+if [ -n "$COPY" ]; then
+    if grim_to - | wl-copy --type image/png; then
+        note "Copied to clipboard" ""
+    else
+        note "Screenshot failed" "grim/wl-copy error"
+        exit 1
+    fi
+    exit 0
+fi
+
+if [ -z "$OUTFILE" ]; then
+    mkdir -p "$DIR"
+    OUTFILE="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
+fi
+
+if grim_to "$OUTFILE"; then
+    wl-copy --type image/png < "$OUTFILE" 2>/dev/null || true
+    note "Screenshot saved" "$OUTFILE"
+    exit 0
+else
+    note "Screenshot failed" "grim error"
+    exit 1
+fi

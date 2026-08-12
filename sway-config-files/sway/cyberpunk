@@ -1,0 +1,28 @@
+# Cyberpunk palette (matches ~/.config/kitty/current-theme.conf)
+# Variable names kept identical to the old catppuccin-mocha file.
+set $rosewater #FFFFFFff
+set $flamingo #FF80ABff
+set $pink #FF4081ff
+set $mauve #C592FFff
+set $red #FF0055ff
+set $maroon #FF4081ff
+set $peach #FFFC58ff
+set $yellow #FFFC58ff
+set $green #00FF9Cff
+set $teal #00FFC8ff
+set $sky #0DCDCDff
+set $sapphire #76C1FFff
+set $blue #76C1FFff
+set $lavender #C592FFff
+set $text #EEFFFFff
+set $subtext1 #C0AECFff
+set $subtext0 #9A8AA8ff
+set $overlay2 #777777ff
+set $overlay1 #6A5A78ff
+set $overlay0 #55465Fff
+set $surface2 #563466ff
+set $surface1 #33203Aff
+set $surface0 #1F1520ff
+set $base #120B10ff
+set $mantle #140007ff
+set $crust #0A0508ff

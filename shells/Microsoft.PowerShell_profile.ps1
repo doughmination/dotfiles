@@ -94,51 +94,12 @@ function grep {
     }
 }
 
-# Custom Aliases - Simple connecting message
-# Note: PowerShell doesn't handle SSH animations well due to terminal I/O conflicts
-function sch {
-    Write-Host "Connecting..." -ForegroundColor Cyan
-    ssh clove@ssh.doughmination.win -p 420
-}
-
+# Custom Aliases
 function sgh {
-    Write-Host "Connecting..." -ForegroundColor Cyan
-    ssh clove@girlsnetwork.dev -p 420
+    ssh clove@shell.doughmination.win -p 421
 }
 
-function soh {
-    Write-Host "Connecting..." -ForegroundColor Cyan
-    ssh clovid@play.somc.club -p 2022
-}
-
-function webtest {
-    Write-Host "Syncing files..."
-    Remove-Item -Path ~/weblocal/* -Recurse -Force -ErrorAction SilentlyContinue
-    Copy-Item -Path ~/girlsnetwork.dev/src/* -Destination ~/weblocal/ -Recurse -Force
-    Write-Host "Synced!"
-}
-
-function clreload {
-    git pull
-    docker compose build --no-cache
-    docker compose down
-    docker compose up -d
-    docker compose logs -f
-}
-
-function webreload {
-    git pull
-    docker compose pull
-    docker compose up -d
-}
-
-# Typo-friendly cd
-function cdd {
-    param([string]$Path)
-    Set-Location $Path
-}
-
-# Clone a doughmination repo by name (ported from zsh)
+# Clone a doughmination repo by name
 function doughclone {
     param([Parameter(Mandatory=$true)][string]$RepoName)
     git clone "https://github.com/doughmination/$RepoName"
@@ -166,22 +127,11 @@ if (Get-Module -ListAvailable -Name Get-ChildItemColor) {
     Set-Alias -Name ls -Value Get-ChildItemColor -Force
 }
 
-# bun (ported from zsh)
+# bun
 $env:BUN_INSTALL = "$HOME\.bun"
 $env:PATH = "$env:BUN_INSTALL\bin;$env:PATH"
 
-# local bin equivalent (ported from zsh's ~/.local/bin, only added if present)
+# local bin (only added if present)
 if (Test-Path "$HOME\.local\bin") {
     $env:PATH = "$HOME\.local\bin;$env:PATH"
 }
-
-# Android SDK platform-tools (ported from zsh, macOS path — adjust for this machine)
-# $env:PATH = "$env:PATH;$HOME\AppData\Local\Android\Sdk\platform-tools"
-
-# Run hyfetch on terminal start (if installed and available)
-if (Get-Command hyfetch -ErrorAction SilentlyContinue) {
-    hyfetch
-}
-
-# Welcome message (optional - comment out if not desired)
-# Write-Host "$PURPLE`nWelcome to PowerShell!$RESET" -NoNewline

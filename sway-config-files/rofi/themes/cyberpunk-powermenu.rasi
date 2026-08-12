@@ -1,0 +1,84 @@
+/* Cyberpunk power menu — matches ~/.config/kitty/current-theme.conf */
+@import "cyberpunk-palette"
+
+* {
+  background-color: transparent;
+  text-color:       @text;
+  font:             "DaddyTimeMono Nerd Font 14";
+}
+
+window {
+  location:         center;
+  width:            420px;
+  padding:          0;
+  border:           2px;
+  border-color:     @red;
+  border-radius:    10px;
+  background-color: @base;
+}
+
+mainbox {
+  padding:  16px;
+  spacing:  12px;
+  children: [ "inputbar", "listview" ];
+}
+
+inputbar {
+  padding:          10px 14px;
+  spacing:          8px;
+  border-radius:    8px;
+  background-color: @mantle;
+  border:           1px;
+  border-color:     @surface1;
+  children:         [ "prompt", "entry" ];
+}
+
+prompt {
+  text-color: @red;
+}
+
+entry {
+  text-color:        @text;
+  placeholder:       "power";
+  placeholder-color: @overlay1;
+}
+
+listview {
+  lines:        4;
+  columns:      1;
+  spacing:      6px;
+  scrollbar:    false;
+  fixed-height: false;
+}
+
+element {
+  padding:       10px 14px;
+  spacing:       12px;
+  border-radius: 8px;
+  cursor:        pointer;
+}
+
+element normal.normal {
+  background-color: @mantle;
+  text-color:       @subtext1;
+}
+
+element selected.normal {
+  background-color: @red;
+  text-color:       @base;
+}
+
+element alternate.normal {
+  background-color: @mantle;
+  text-color:       @subtext1;
+}
+
+element-icon {
+  size:       1.2em;
+  text-color: inherit;
+}
+
+element-text {
+  text-color:  inherit;
+  vertical-align: 0.5;
+}

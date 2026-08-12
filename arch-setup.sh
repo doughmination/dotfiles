@@ -53,7 +53,59 @@ configure_sudo() {
 # ---------------------------------------------------------------------------
 setup_dotfiles() {
   log "Copying dotfiles"
-  cp "$SCRIPT_DIR/shells/.bashrc" "$HOME/.bashrc"
+
+  # Timestamped backup dir, created lazily by backup() on first collision.
+  local backup_dir="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
+
+  # Move an existing path out of the way instead of clobbering it.
+  backup() {
+    local target="$1"
+    [[ -e "$target" || -L "$target" ]] || return 0
+    mkdir -p "$backup_dir"
+    local rel="${target#"$HOME"/}"
+    mkdir -p "$backup_dir/$(dirname "$rel")"
+    mv "$target" "$backup_dir/$rel"
+    warn "backed up $target -> $backup_dir/$rel"
+  }
+
+  # Shell configs
+  for f in .bashrc .zshrc; do
+    backup "$HOME/$f"
+    cp "$SCRIPT_DIR/shells/$f" "$HOME/$f"
+  done
+
+  # Everything under sway-config-files/ maps 1:1 into ~/.config/
+  log "Installing ~/.config from sway-config-files/"
+  mkdir -p "$HOME/.config"
+  local entry name
+  for entry in "$SCRIPT_DIR"/sway-config-files/*; do
+    [[ -e "$entry" ]] || continue          # empty glob guard
+    name="$(basename "$entry")"
+    backup "$HOME/.config/$name"
+    cp -r "$entry" "$HOME/.config/$name"
+  done
+
+  # VSCodium settings (repo keeps it as .jsonc; VSCodium reads settings.json)
+  log "Installing VSCodium settings"
+  mkdir -p "$HOME/.config/VSCodium/User"
+  backup "$HOME/.config/VSCodium/User/settings.json"
+  cp "$SCRIPT_DIR/vscode/settings.jsonc" "$HOME/.config/VSCodium/User/settings.json"
+
+  # Local binaries: local-binaries/* -> ~/.local/bin/ (sway keybinds call these by
+  # path, e.g. $ss = ~/.local/bin/screenshot).
+  log "Installing ~/.local/bin from local-binaries/"
+  mkdir -p "$HOME/.local/bin"
+  for entry in "$SCRIPT_DIR"/local-binaries/*; do
+    [[ -f "$entry" ]] || continue
+    name="$(basename "$entry")"
+    backup "$HOME/.local/bin/$name"
+    install -Dm755 "$entry" "$HOME/.local/bin/$name"
+  done
+
+  # waybar's memory script and anything else shipped executable needs +x
+  chmod +x "$HOME/.config/waybar/scripts/"* 2>/dev/null || true
+
+  unset -f backup
 }
 
 # ---------------------------------------------------------------------------
@@ -120,24 +172,86 @@ setup_node() {
 }
 
 # ---------------------------------------------------------------------------
+# 5b. Bun
+# ---------------------------------------------------------------------------
+# Installs to ~/.bun; both shell rc files already put ~/.bun/bin on PATH.
+setup_bun() {
+  if [[ -x "$HOME/.bun/bin/bun" ]]; then
+    log "bun already installed — upgrading"
+    "$HOME/.bun/bin/bun" upgrade
+    return
+  fi
+  log "Installing bun"
+  curl -fsSL https://bun.com/install | bash
+}
+
+# ---------------------------------------------------------------------------
+# 5c. Python virtualenv
+# ---------------------------------------------------------------------------
+# Arch's Python is externally managed (PEP 668), so `pip install` outside a venv
+# is refused. This is the general-purpose env to activate for that:
+#   source ~/.venv/bin/activate
+setup_python() {
+  local venv="$HOME/.venv"
+  if [[ -d "$venv" ]]; then
+    log "venv already exists at $venv — skipping"
+  else
+    log "Creating Python venv at $venv"
+    python -m venv "$venv"
+  fi
+  "$venv/bin/python" -m pip install --upgrade pip setuptools wheel
+}
+
+# ---------------------------------------------------------------------------
 # 6. Packages
 # ---------------------------------------------------------------------------
 PACMAN_PKGS=(
-  amd-ucode ark base base-devel bind bottom chromium dolphin efibootmgr
-  exfatprogs firefox git github-cli gptfdisk htop hyfetch inkscape
-  intel-media-driver iwd kate kitty lazygit libreoffice-fresh
-  libva-intel-driver linux linux-firmware nano network-manager-applet
-  networkmanager nmap obs-studio plasma-meta plasma-workspace prismlauncher
-  sddm smartmontools steam sudo testdisk vim vlc vulkan-intel vulkan-nouveau
-  vulkan-radeon wget wireless_tools wpa_supplicant xdg-utils
-  xf86-video-amdgpu xf86-video-ati xf86-video-nouveau xorg-server xorg-xinit
-  zenith zram-generator noto-fonts-emoji noto-fonts-cjk sbctl
+  # base system / firmware / boot
+  amd-ucode base base-devel efibootmgr linux linux-firmware mkinitcpio sbctl
+  sudo zram-generator
+
+  # hardware / graphics
+  intel-media-driver libva-intel-driver mesa vulkan-intel vulkan-nouveau
+  vulkan-radeon xf86-video-amdgpu xf86-video-ati xf86-video-nouveau
+  xorg-server xorg-xinit
+
+  # networking
+  bind bluez-utils iwd network-manager-applet networkmanager nmap openssh
+  wireless_tools wpa_supplicant
+
+  # sway session (see sway-config-files/) — swayfx itself is in AUR_PKGS
+  autotiling awww brightnessctl cliphist grim hypridle hyprlock playerctl
+  polkit-kde-agent rofi slurp swaybg swayidle swaylock swaync waybar
+  wl-clipboard wmenu xdg-desktop-portal-gtk xdg-desktop-portal-wlr xdg-utils
+
+  # audio
+  pavucontrol pipewire pipewire-alsa pipewire-pulse wireplumber
+
+  # theming / fonts / toolkit config
+  noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme qt5ct qt6ct
+  qt6-wayland ttf-jetbrains-mono-nerd xsettingsd
+
+  # terminal, shell tooling, TUI apps
+  btop cava fastfetch foot htop hyfetch jq kitty lazygit python python-pip
+  ripgrep sassc zsh zsh-completions bash-completion
+  yazi zenith bottom
+
+  # editors / files / archives
+  7zip ark dolphin exfatprogs gptfdisk nano poppler smartmontools
+  testdisk unzip vim wget zip
+
+  # desktop apps
+  chromium firefox git github-cli ibus inkscape librewolf libreoffice-fresh
+  obs-studio prismlauncher steam vlc
+
+  # plasma / display manager (second session, kept alongside sway)
+  plasma-desktop plasma-login-manager plasma-meta sddm
 )
 
 # yay is omitted on purpose — it's built from source in install_yay().
 AUR_PKGS=(
-  discord-canary docker-desktop equicord-installer-bin spotify vscodium-bin
-  zen-browser-bin
+  archy-screenshot discord-canary docker-desktop equicord-installer-bin eww
+  oh-my-posh-bin spotify swayfx vscodium-bin waypaper zen-browser-bin
 )
 
 install_packages() {
@@ -168,6 +282,8 @@ main() {
   install_yay
   setup_node
   install_packages
+  setup_bun
+  setup_python
 
   log "Done."
 }

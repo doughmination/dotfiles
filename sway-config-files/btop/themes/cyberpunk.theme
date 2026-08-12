@@ -1,0 +1,77 @@
+# Cyberpunk — matches ~/.config/kitty/current-theme.conf
+
+# Main background
+theme[main_bg]="#120B10"
+# Main text color
+theme[main_fg]="#EEFFFF"
+# Title color for boxes
+theme[title]="#FF0055"
+# Higlight color for keyboard shortcuts
+theme[hi_fg]="#00FFC8"
+# Background color of selected items
+theme[selected_bg]="#563466"
+# Foreground color of selected items
+theme[selected_fg]="#FFFC58"
+# Color of inactive/disabled text
+theme[inactive_fg]="#55465F"
+# Color of text appearing on top of graphs
+theme[graph_text]="#C0AECF"
+# Background color of the percentage meters
+theme[meter_bg]="#1F1520"
+# Misc colors for processes box
+theme[proc_misc]="#00FF9C"
+# Cpu box outline color
+theme[cpu_box]="#C592FF"
+# Memory/disks box outline color
+theme[mem_box]="#00FF9C"
+# Net up/down box outline color
+theme[net_box]="#FF4081"
+# Processes box outline color
+theme[proc_box]="#76C1FF"
+# Box divider line and small boxes line color
+theme[div_line]="#33203A"
+
+# Temperature graph colors
+theme[temp_start]="#00FFC8"
+theme[temp_mid]="#FFFC58"
+theme[temp_end]="#FF0055"
+
+# CPU graph colors
+theme[cpu_start]="#00FF9C"
+theme[cpu_mid]="#FFFC58"
+theme[cpu_end]="#FF0055"
+
+# Mem/Disk free meter
+theme[free_start]="#563466"
+theme[free_mid]="#C592FF"
+theme[free_end]="#FF80AB"
+
+# Mem/Disk cached meter
+theme[cached_start]="#0DCDCD"
+theme[cached_mid]="#76C1FF"
+theme[cached_end]="#C592FF"
+
+# Mem/Disk available meter
+theme[available_start]="#FFFC58"
+theme[available_mid]="#FF80AB"
+theme[available_end]="#FF0055"
+
+# Mem/Disk used meter
+theme[used_start]="#00FF9C"
+theme[used_mid]="#00FFC8"
+theme[used_end]="#FF0055"
+
+# Download graph colors
+theme[download_start]="#C592FF"
+theme[download_mid]="#FF4081"
+theme[download_end]="#FF0055"
+
+# Upload graph colors
+theme[upload_start]="#00FFC8"
+theme[upload_mid]="#00FF9C"
+theme[upload_end]="#FFFC58"
+
+# Process box color gradient for threads, mem and cpu usage
+theme[process_start]="#00FFC8"
+theme[process_mid]="#C592FF"
+theme[process_end]="#FF0055"
