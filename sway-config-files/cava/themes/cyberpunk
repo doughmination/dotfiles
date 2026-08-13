@@ -1,14 +1,14 @@
 # Cyberpunk — matches ~/.config/kitty/current-theme.conf
 [color]
 
-background = '#120B10'
-foreground = '#FF0055'
+background = '#040A10'
+foreground = '#FB3048'
 
 gradient = 1
 gradient_count = 6
-gradient_color_1 = '#C592FF'
-gradient_color_2 = '#76C1FF'
-gradient_color_3 = '#00FFC8'
-gradient_color_4 = '#00FF9C'
-gradient_color_5 = '#FFFC58'
-gradient_color_6 = '#FF0055'
+gradient_color_1 = '#9370DB'
+gradient_color_2 = '#AE94E4'
+gradient_color_3 = '#1AC5B0'
+gradient_color_4 = '#28C775'
+gradient_color_5 = '#FDF500'
+gradient_color_6 = '#FB3048'

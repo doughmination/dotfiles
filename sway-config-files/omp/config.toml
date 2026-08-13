@@ -3,16 +3,16 @@ version = 3
 final_space = true
 
 [palette]
-  pink = '#FF0055'
-  hotpink = '#FF4081'
-  cyan = '#00FFC8'
-  teal = '#0DCDCD'
-  neon = '#00FF9C'
-  amber = '#FFFC58'
-  violet = '#C592FF'
-  ice = '#76C1FF'
-  grey = '#6A5A78'
-  fg = '#EEFFFF'
+  pink = '#FB3048'
+  hotpink = '#E455AE'
+  cyan = '#1AC5B0'
+  teal = '#5DF4FE'
+  neon = '#28C775'
+  amber = '#FDF500'
+  violet = '#9370DB'
+  ice = '#AE94E4'
+  grey = '#52545B'
+  fg = '#E8FBFD'
 
 [secondary_prompt]
   template = '❯❯ '

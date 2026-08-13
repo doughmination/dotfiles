@@ -109,6 +109,32 @@ setup_dotfiles() {
 }
 
 # ---------------------------------------------------------------------------
+# 2b. SDDM theme
+# ---------------------------------------------------------------------------
+# Installs the custom "pixel-night-city" theme into /usr/share (root-owned,
+# hence sudo) and points sddm at it. Does NOT restart/reload sddm — the new
+# theme only takes effect on the next login or a manual `sudo systemctl
+# restart sddm`, left for you to trigger since it kills the current session.
+setup_sddm_theme() {
+  local theme_name="pixel-night-city"
+  local dest="/usr/share/sddm/themes/$theme_name"
+
+  log "Installing SDDM theme ($theme_name)"
+
+  if [[ -e "$dest" ]]; then
+    local backup_dest="/usr/share/sddm/themes/${theme_name}.bak-$(date +%Y%m%d-%H%M%S)"
+    warn "backing up existing $dest -> $backup_dest"
+    sudo mv "$dest" "$backup_dest"
+  fi
+  sudo cp -r "$SCRIPT_DIR/sddm-theme" "$dest"
+  sudo chown -R root:root "$dest"
+
+  log "Pointing sddm at $theme_name"
+  sudo mkdir -p /etc/sddm.conf.d
+  printf '[Theme]\nCurrent=%s\n' "$theme_name" | sudo tee /etc/sddm.conf.d/theme.conf > /dev/null
+}
+
+# ---------------------------------------------------------------------------
 # 3. multilib repository  (needed for steam's 32-bit deps)
 # ---------------------------------------------------------------------------
 enable_multilib() {
@@ -203,6 +229,55 @@ setup_python() {
 }
 
 # ---------------------------------------------------------------------------
+# 5d. Fonts (zip downloads)
+# ---------------------------------------------------------------------------
+# Each entry is "dest-dir-name|url". The URLs don't end in .zip but respond
+# with one (Content-Disposition: attachment) when fetched — plain curl is
+# enough, no browser-y tricks needed. Font files are flattened into
+# ~/.local/share/fonts/<dest-dir-name>/ regardless of how deep the zip
+# nests them.
+FONT_ZIPS=(
+  "ComicCode|https://m.doughmination.gay/zip?path=f%2FComic-Code%2Fotf"
+)
+
+setup_fonts() {
+  ((${#FONT_ZIPS[@]})) || return 0
+  log "Installing fonts"
+
+  local fonts_dir="$HOME/.local/share/fonts"
+  mkdir -p "$fonts_dir"
+
+  local entry name url dest work zipfile
+  for entry in "${FONT_ZIPS[@]}"; do
+    name="${entry%%|*}"
+    url="${entry#*|}"
+    dest="$fonts_dir/$name"
+
+    if [[ -d "$dest" && -n "$(ls -A "$dest" 2>/dev/null)" ]]; then
+      log "Font '$name' already installed — skipping"
+      continue
+    fi
+
+    log "Downloading font: $name"
+    work="$(mktemp -d)"
+    zipfile="$work/$name.zip"
+    if ! curl -fsSL "$url" -o "$zipfile"; then
+      warn "failed to download '$name' from $url — skipping"
+      rm -rf "$work"
+      continue
+    fi
+
+    mkdir -p "$dest"
+    unzip -qo "$zipfile" -d "$work/extracted"
+    find "$work/extracted" -type f \( -iname '*.otf' -o -iname '*.ttf' \) -exec cp {} "$dest/" \;
+    rm -rf "$work"
+  done
+
+  log "Refreshing font cache"
+  fc-cache -f "$fonts_dir" > /dev/null
+}
+
+# ---------------------------------------------------------------------------
 # 6. Packages
 # ---------------------------------------------------------------------------
 PACMAN_PKGS=(
@@ -278,12 +353,14 @@ main() {
 
   configure_sudo
   setup_dotfiles
+  setup_sddm_theme
   enable_multilib
   install_yay
   setup_node
   install_packages
   setup_bun
   setup_python
+  setup_fonts
 
   log "Done."
 }
