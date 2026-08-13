@@ -1,11 +1,31 @@
 # DotFiles
 
-This collection includes custom shell configurations.
+Personal dotfiles for a SwayFX session on Arch Linux.
 
-## Shells Included
-Bash, Zsh and PowerShell
+## Install
 
-These are found in the [shells](./shells) folder
+```bash
+./arch-setup.sh
+```
 
-## Setup Scripts
-This is a set of personal setup scripts for different operating systems.
+Run as your normal user, not root.
+
+Existing files in `~` are backed up to `~/.dotfiles-backup/<timestamp>/`.
+
+## Layout
+
+| Folder | Installs to |
+| --- | --- |
+| `shells` | `~` |
+| `home` | `~` |
+| `sway-config-files` | `~/.config` |
+| `local-binaries` | `~/.local/bin` |
+| `vscode` | `~/.config/VSCodium/User` |
+| `sddm-theme` | `/usr/share/sddm/themes` |
+| `wallpapers` | `~/Pictures` |
+
+Package lists live at the top of `arch-setup.sh`.
+
+## Licence
+
+[Doughmination Authorised Source Licence 1.0](./LICENCE.md)

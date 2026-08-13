@@ -28,6 +28,7 @@ PACMAN_PKGS=(
 
   # hardware / graphics
   intel-media-driver
+  lib32-vulkan-radeon
   libva-intel-driver
   mesa
   vulkan-intel
@@ -80,6 +81,11 @@ PACMAN_PKGS=(
   pipewire-pulse
   wireplumber
 
+  # media codecs
+  gst-plugins-bad
+  gst-plugins-good
+  gst-plugins-ugly
+
   # theming / fonts / toolkit config
   noto-fonts
   noto-fonts-cjk
@@ -118,6 +124,7 @@ PACMAN_PKGS=(
   dolphin
   exfatprogs
   gptfdisk
+  kate
   nano
   poppler
   smartmontools
