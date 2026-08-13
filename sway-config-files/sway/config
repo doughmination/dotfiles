@@ -226,7 +226,7 @@ bindsym $mod+k exec ~/.local/bin/switch-kb-layout
 default_border pixel 3
 gaps inner 5
 gaps outer 7
-output * bg /home/iuse/Pictures/wallpaper.jpg fill
+output * bg ~/Pictures/wallpaper.jpg fill
 
 # Opacity
 for_window [class=".*"] opacity set 0.75
