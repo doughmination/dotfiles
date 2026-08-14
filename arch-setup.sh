@@ -115,8 +115,6 @@ PACMAN_PKGS=(
   sassc
   yazi
   zenith
-  zsh
-  zsh-completions
 
   # editors / files / archives
   7zip
@@ -248,7 +246,7 @@ setupDotfiles() {
   }
 
   local file
-  for file in .bashrc .zshrc; do
+  for file in .bashrc; do
     backup "$HOME/$file"
     cp "$SCRIPT_DIR/shells/$file" "$HOME/$file"
   done

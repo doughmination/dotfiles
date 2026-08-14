@@ -40,40 +40,8 @@ if [ -n "$force_color_prompt" ]; then
     fi
 fi
 
-# Custom prompt colors (User)
-PINK='\[\033[38;5;205m\]'
-PURPLE='\[\033[38;5;135m\]'
-BLUE='\[\033[38;5;39m\]'
-BLACK='\[\033[38;5;240m\]'
-WHITE='\[\033[00m\]'
-RESET='\[\033[00m\]'
-
-# Git Function (ChatGPT)
-git_prompt() {
-    git rev-parse --is-inside-work-tree &>/dev/null || return
-    local branch dirty
-    branch=$(git symbolic-ref --short HEAD 2>/dev/null)
-    git diff --quiet || dirty="*"
-    printf " [%s%s]" "$branch" "$dirty"
-}
-
-# User made terminal
-if [ "$color_prompt" = yes ]; then
-    PS1='\n'"${WHITE}"'↱'"${PINK}"'\u'"${WHITE}"'@'"${PURPLE}"'\h '"${BLACK}"'[\w]'"${WHITE}"'$(git_prompt)'$'\n'"${WHITE}"'↳'"${BLUE}"'£ '"${RESET}"
-else
-    PS1='\n↱\u@\h [\w]\n↳£ '
-fi
-
+# Prompt is oh-my-posh, configured at the end of this file
 unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
-esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
@@ -97,6 +65,9 @@ alias bashedit='nano ~/.bashrc'
 alias bashreload='source ~/.bashrc'
 alias archeon='sudo pacman'
 alias sgh='ssh clove@shell.doughmination.win -p 421'
+
+# Sync repos to both github and my mirror
+alias gitsync='git push -u origin main && git push --mirror mirror'
 
 # Clone a doughmination repo by name (ported from zsh)
 doughclone() {
@@ -126,5 +97,13 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # local bin (ported from zsh)
 export PATH="$HOME/.local/bin:$PATH"
 
-# Load a venv
+# Load a venv, letting oh-my-posh own the prompt instead of the venv prefix
+export VIRTUAL_ENV_DISABLE_PROMPT=1
 source ~/venv/bin/activate
+
+# Prompt (cyberpunk powerline), with a plain fallback if the binary is missing
+if command -v oh-my-posh >/dev/null 2>&1; then
+    eval "$(oh-my-posh init bash --config ~/.config/omp/config.toml)"
+else
+    PS1='\n\[\033[38;5;205m\]\u@\h \[\033[38;5;135m\][\w]\[\033[00m\]\n❯ '
+fi

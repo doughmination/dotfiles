@@ -1,18 +1,27 @@
+# omp/config.toml
+
 console_title_template = '{{ .Shell }} in {{ .Folder }}'
 version = 3
 final_space = true
 
+# Sourced from ~/.config/kitty/current-theme.conf (Cyberpunk)
 [palette]
-  pink = '#FB3048'
-  hotpink = '#E455AE'
-  cyan = '#1AC5B0'
-  teal = '#5DF4FE'
-  neon = '#28C775'
-  amber = '#FDF500'
+  bg = '#040A10'
+  fg = '#E8FBFD'
+  hotPink = '#E455AE'
+  magenta = '#CB1DCD'
+  red = '#FB3048'
+  brightRed = '#FF5048'
   violet = '#9370DB'
   ice = '#AE94E4'
+  cyan = '#1AC5B0'
+  teal = '#5DF4FE'
+  green = '#28C775'
+  mint = '#5ED598'
+  amber = '#FDF500'
+  lime = '#CFED58'
   grey = '#52545B'
-  fg = '#E8FBFD'
+  slate = '#7D7F84'
 
 [secondary_prompt]
   template = '❯❯ '
@@ -22,51 +31,118 @@ final_space = true
 [transient_prompt]
   template = '❯ '
   background = 'transparent'
-  foreground_templates = ['{{if gt .Code 0}}p:pink{{end}}', '{{if eq .Code 0}}p:cyan{{end}}']
+  foreground_templates = [
+    '{{ if gt .Code 0 }}p:red{{ end }}',
+    '{{ if eq .Code 0 }}p:cyan{{ end }}',
+  ]
 
 [[blocks]]
   type = 'prompt'
   alignment = 'left'
   newline = true
 
+  # user@host
   [[blocks.segments]]
-    template = '{{ .Path }}'
-    foreground = 'p:ice'
-    background = 'transparent'
+    type = 'session'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = ' {{ if .Root }}⚡ {{ end }}{{ .UserName }}@{{ .HostName }} '
+    foreground = 'p:bg'
+    background = 'p:hotPink'
+
+    [blocks.segments.properties]
+      cache_duration = 'none'
+
+  # Working directory
+  [[blocks.segments]]
     type = 'path'
-    style = 'plain'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = ' {{ .Path }} '
+    foreground = 'p:bg'
+    background = 'p:violet'
 
     [blocks.segments.properties]
       cache_duration = 'none'
       style = 'full'
+      home_icon = '~'
+      folder_separator_icon = '/'
 
+  # Git branch, dirty flag, ahead/behind counts
   [[blocks.segments]]
-    template = ' {{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }}*{{ end }} <p:cyan>{{ if gt .Behind 0 }}⇣{{ end }}{{ if gt .Ahead 0 }}⇡{{ end }}</>'
-    foreground = 'p:grey'
-    background = 'transparent'
     type = 'git'
-    style = 'plain'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = ' {{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }}*{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }} '
+    foreground = 'p:bg'
+    background = 'p:cyan'
+    background_templates = [
+      '{{ if or (.Working.Changed) (.Staging.Changed) }}p:amber{{ end }}',
+      '{{ if gt .Behind 0 }}p:teal{{ end }}',
+      '{{ if gt .Ahead 0 }}p:teal{{ end }}',
+    ]
 
     [blocks.segments.properties]
-      branch_icon = ''
       cache_duration = 'none'
+      branch_icon = ' '
       commit_icon = '@'
       fetch_status = true
+      fetch_upstream_icon = true
 
-[[blocks]]
-  type = 'rprompt'
-  overflow = 'hidden'
-
+  # Python, only inside Python projects
   [[blocks.segments]]
-    template = '{{ .FormattedMs }}'
-    foreground = 'p:amber'
-    background = 'transparent'
+    type = 'python'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = '  {{ if .Venv }}{{ .Venv }}{{ else }}{{ .Full }}{{ end }} '
+    foreground = 'p:bg'
+    background = 'p:green'
+
+    [blocks.segments.properties]
+      cache_duration = 'none'
+      display_mode = 'files'
+      fetch_virtual_env = true
+
+  # Node, only inside Node projects
+  [[blocks.segments]]
+    type = 'node'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = '  {{ .Full }} '
+    foreground = 'p:bg'
+    background = 'p:mint'
+
+    [blocks.segments.properties]
+      cache_duration = 'none'
+      display_mode = 'files'
+      fetch_package_manager = false
+
+  # Command duration, shown past 5s
+  [[blocks.segments]]
     type = 'executiontime'
-    style = 'plain'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = '  {{ .FormattedMs }} '
+    foreground = 'p:bg'
+    background = 'p:lime'
 
     [blocks.segments.properties]
       cache_duration = 'none'
       threshold = 5000
+      style = 'austin'
+
+  # Exit code, shown only on failure
+  [[blocks.segments]]
+    type = 'status'
+    style = 'powerline'
+    powerline_symbol = ''
+    template = '  {{ .Code }} '
+    foreground = 'p:fg'
+    background = 'p:red'
+
+    [blocks.segments.properties]
+      cache_duration = 'none'
+      always_enabled = false
 
 [[blocks]]
   type = 'prompt'
@@ -74,11 +150,14 @@ final_space = true
   newline = true
 
   [[blocks.segments]]
-    template = '❯'
-    background = 'transparent'
     type = 'text'
     style = 'plain'
-    foreground_templates = ['{{if gt .Code 0}}p:pink{{end}}', '{{if eq .Code 0}}p:cyan{{end}}']
+    template = '❯'
+    background = 'transparent'
+    foreground_templates = [
+      '{{ if gt .Code 0 }}p:red{{ end }}',
+      '{{ if eq .Code 0 }}p:cyan{{ end }}',
+    ]
 
     [blocks.segments.properties]
       cache_duration = 'none'
