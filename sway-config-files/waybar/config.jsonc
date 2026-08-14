@@ -5,7 +5,7 @@
     "margin-right": 13,
     "margin-top": 15,
     "margin-bottom": 5,
-    "height": 30,
+    "height": 40,
     // Choose the order of the modules
     //###################// Modules //###################//
     "modules-left": [
@@ -159,7 +159,7 @@
     "custom/date": {
         "format": "{}",
         "exec": "date '+%d/%m'",
-        "on-click": "~/.config/eww/calendar/launch_bar",
+        "on-click": "eww -c ~/.config/eww/calendar open --toggle calendar",
         "tooltip": false,
         "interval": 30
     },
@@ -187,7 +187,7 @@
         "escape": true,
         "interval": 5,
         "tooltip": false,
-        "exec": "playerctl metadata --format='{{ title }}'",
+        "exec": "playerctl metadata --format='{{ title }}' 2>/dev/null",
         "max-length": 50
     },
     "custom/prev": {
@@ -233,7 +233,7 @@
         "format": "{}",
         "return-type": "json",
         "interval": 30,
-        "exec": "$HOME/.config/waybar/v2/scripts/memory"
+        "exec": "$HOME/.config/waybar/scripts/memory"
     },
     //#####################// Tray //####################//
     "group/tray": {

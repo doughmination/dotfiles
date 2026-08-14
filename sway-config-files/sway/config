@@ -59,8 +59,8 @@ shadows enable
 shadows_on_csd enable
 shadow_blur_radius 28
 shadow_offset 0 0
-shadow_color #FF0055CC
-shadow_inactive_color #00FFC855
+shadow_color #E455AECC
+shadow_inactive_color #1AC5B055
 
 # Glass treatment for the bar, launcher and notifications
 layer_effects "waybar" blur enable; shadows enable; corner_radius 14
@@ -69,7 +69,7 @@ layer_effects "rofi" blur enable; shadows enable; corner_radius 16
 # inactive window fade amount. 0.0 = no dimming, 1.0 = fully dimmed
 default_dim_inactive 0.17
 dim_inactive_colors.unfocused #000000FF
-dim_inactive_colors.urgent #900000FF
+dim_inactive_colors.urgent #710100FF
 
 # Move minimized windows into Scratchpad (enable|disable)
 scratchpad_minimize disable
@@ -77,7 +77,7 @@ scratchpad_minimize disable
 ### Colors
 #
 # target                 title     bg    text   indicator  border
-client.focused           $red      $base $text  $red       $red
+client.focused           $pink     $base $text  $pink      $pink
 client.focused_inactive  $overlay0 $base $text  $overlay0  $overlay0
 client.unfocused         $overlay0 $base $text  $overlay0  $overlay0
 client.urgent            $red      $base $peach $red       $red
@@ -209,7 +209,8 @@ bindsym Shift+XF86AudioLowerVolume  exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 0
 # Brightness
 bindsym XF86MonBrightnessUp         exec brightnessctl -q s 5%+
 bindsym XF86MonBrightnessDown       exec brightnessctl -q s 5%-
-bindsym Mod1+XF86MonBrightnessUp    exec brightnessctl -q s 5%-
+bindsym $mod+o exec brightnessctl --device='tpacpi::kbd_backlight' set 1-
+bindsym $mod+p exec brightnessctl --device='tpacpi::kbd_backlight' set +1
 
 # Screenshots
 bindsym Print exec $ss -c

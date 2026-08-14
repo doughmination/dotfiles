@@ -4,10 +4,13 @@ $yellow: #FDF500;
 $blue: #1AC5B0;
 $green: #28C775;
 
+// style.css is committed alongside this file and was hand-edited: "feather"
+// was dropped from the stack here to match it. Keep the two in step, or
+// recompiling silently reverts the change.
 * {
   border: none;
   border-radius: 14px;
-  font-family: "feather", "DaddyTimeMono Nerd Font";
+  font-family: "DaddyTimeMono Nerd Font";
   font-size: 16px;
   min-height: 10px;
 }

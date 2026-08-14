@@ -13,6 +13,15 @@ FONT_ZIPS=(
   "ComicCode|https://m.doughmination.gay/zip?path=f%2FComic-Code%2Fotf"
 )
 
+# Single font files, dropped straight into ~/.local/share/fonts
+FONT_FILES=(
+  "https://m.doughmination.gay/f/PixelifySans/PixelifySans-Bold.ttf"
+)
+
+# Defaults; promptIdentity offers these at startup. Env vars override.
+GIT_USER_NAME="${GIT_USER_NAME:-Clove Twilight}"
+GIT_USER_EMAIL="${GIT_USER_EMAIL:-admin@doughmination.win}"
+
 PACMAN_PKGS=(
   # base system / firmware / boot
   amd-ucode
@@ -39,6 +48,7 @@ PACMAN_PKGS=(
   xf86-video-nouveau
   xorg-server
   xorg-xinit
+  xorg-xwayland
 
   # networking
   bind
@@ -53,7 +63,6 @@ PACMAN_PKGS=(
 
   # sway session — swayfx itself is in AUR_PKGS
   autotiling
-  awww
   brightnessctl
   cliphist
   grim
@@ -74,19 +83,27 @@ PACMAN_PKGS=(
   xdg-desktop-portal-wlr
   xdg-utils
 
-  # audio
+  # audio — pipewire alone ships no SPA backends, so no sinks at all
+  alsa-utils
   pavucontrol
   pipewire
   pipewire-alsa
+  pipewire-audio
   pipewire-pulse
   wireplumber
 
   # media codecs
   gst-plugins-bad
+  gst-plugins-base
   gst-plugins-good
   gst-plugins-ugly
 
+  # credentials — GCM's secretservice store needs a keyring daemon
+  gnome-keyring
+
   # theming / fonts / toolkit config
+  adw-gtk-theme
+  dart-sass
   noto-fonts
   noto-fonts-cjk
   noto-fonts-emoji
@@ -94,8 +111,11 @@ PACMAN_PKGS=(
   qt5ct
   qt6ct
   qt6-wayland
+
+  # the families the configs name — without these everything falls back
+  ttf-cascadia-code-nerd
+  ttf-daddytime-mono-nerd
   ttf-jetbrains-mono-nerd
-  xsettingsd
 
   # terminal, shell tooling, TUI apps
   bash-completion
@@ -106,23 +126,16 @@ PACMAN_PKGS=(
   foot
   htop
   hyfetch
-  jq
   kitty
   lazygit
   python
-  python-pip
-  ripgrep
-  sassc
   yazi
   zenith
 
   # editors / files / archives
   7zip
-  ark
-  dolphin
   exfatprogs
   gptfdisk
-  kate
   nano
   poppler
   smartmontools
@@ -136,7 +149,6 @@ PACMAN_PKGS=(
   chromium
   firefox
   git
-  github-cli
   ibus
   inkscape
   librewolf
@@ -146,14 +158,16 @@ PACMAN_PKGS=(
   steam
   vlc
 
-  # plasma / display manager, kept alongside sway
-  plasma-desktop
-  plasma-login-manager
-  plasma-meta
+  # display manager — the qt deps back the theme's BackgroundVideo.qml
+  qt5-graphicaleffects
+  qt5-quickcontrols2
+  qt6-5compat
+  qt6-multimedia
+  qt6-multimedia-ffmpeg
   sddm
 )
 
-# yay is missing on purpose — installYay builds it from source
+# yay and oh-my-posh are absent on purpose — installYay and setupOhMyPosh
 AUR_PKGS=(
   archy-screenshot
   discord-canary
@@ -162,16 +176,43 @@ AUR_PKGS=(
   eww
   git-credential-manager
   git-credential-manager-extras
-  oh-my-posh-bin
-  spotify
   swayfx
   vscodium-bin
-  waypaper
+  wlogout
   zen-browser-bin
 )
 
-# First, so every later sudo call runs unattended.
-# Trade-off: anything running as you can become root with no prompt.
+# Only these need enabling; everything else is preset-enabled by its package.
+SYSTEM_UNITS=(
+  NetworkManager.service
+  fstrim.timer
+  iwd.service
+  sddm.service
+  sshd.service
+)
+
+# Reads from /dev/tty so a piped `curl … | bash` run still reaches the keyboard.
+promptWithDefault() {
+  local promptText="$1"
+  local defaultValue="$2"
+  local reply=""
+
+  if [[ -r /dev/tty ]]; then
+    read -r -p "$promptText [$defaultValue]: " reply < /dev/tty || reply=""
+  fi
+
+  printf '%s' "${reply:-$defaultValue}"
+}
+
+# Up front, so the long unattended stretch is never interrupted by a question.
+promptIdentity() {
+  log "Git identity — press Enter to accept the default"
+
+  GIT_USER_NAME="$(promptWithDefault 'Name ' "$GIT_USER_NAME")"
+  GIT_USER_EMAIL="$(promptWithDefault 'Email' "$GIT_USER_EMAIL")"
+}
+
+# Trade-off: anything running as you can now become root with no prompt.
 configureSudo() {
   log "Enabling passwordless sudo for the wheel group"
 
@@ -235,7 +276,6 @@ setupDotfiles() {
 
   local backupDir="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 
-  # Move an existing path aside instead of clobbering it
   backup() {
     local target="$1"
     [[ -e "$target" || -L "$target" ]] || return 0
@@ -253,7 +293,7 @@ setupDotfiles() {
     cp "$SCRIPT_DIR/shells/bashrc" "$HOME/$file"
   done
 
-  # home/* maps 1:1 into ~/. dotglob because every file there starts with a dot
+  # dotglob because every file in home/ starts with a dot
   log "Installing ~ dotfiles from home/"
   local entry name
   shopt -s dotglob
@@ -266,7 +306,6 @@ setupDotfiles() {
   done
   shopt -u dotglob
 
-  # sway-config-files/* maps 1:1 into ~/.config/
   log "Installing ~/.config from sway-config-files/"
   mkdir -p "$HOME/.config"
 
@@ -307,8 +346,7 @@ setupDotfiles() {
   unset -f backup
 }
 
-# Takes effect on next login, or `sudo systemctl restart sddm` — which kills
-# the current session, so it is left to you
+# Takes effect on next login; restarting sddm here would kill your session.
 setupSddmTheme() {
   local themeName="pixel-night-city"
   local destination="/usr/share/sddm/themes/$themeName"
@@ -329,10 +367,7 @@ setupSddmTheme() {
   printf '[Theme]\nCurrent=%s\n' "$themeName" | sudo tee /etc/sddm.conf.d/theme.conf > /dev/null
 }
 
-# waybar/hyprlock/sddm format their own clocks, so they read 12-hour regardless
-# of this. This is what makes `date`, GTK and Qt apps agree with them — LC_TIME
-# points at a forked en_GB that is 12-hour but still DD/MM and £.
-# See system/locale/README.md. Takes effect on next login.
+# A forked en_GB that is 12-hour but still DD/MM and £. See system/locale/README.md.
 setupLocale() {
   local localeName="en_GB@12h"
   local sourceDir="$SCRIPT_DIR/system/locale"
@@ -340,10 +375,7 @@ setupLocale() {
   log "Installing $localeName locale"
   sudo install -Dm644 "$sourceDir/$localeName" "/usr/share/i18n/locales/$localeName"
 
-  # locale.gen takes "<name> <charmap>". Note locale-gen then emits it as
-  # en_GB.UTF-8@12h, which is the name /etc/locale.conf has to use.
-  # Stock locale.gen lines carry trailing whitespace, so compare trimmed rather
-  # than with grep -qxF, which would miss them and append a duplicate.
+  # Stock lines carry trailing whitespace, so compare trimmed or we duplicate.
   local entry
   for entry in 'en_GB.UTF-8 UTF-8' "$localeName UTF-8"; do
     if awk -v want="$entry" '
@@ -425,11 +457,25 @@ setupNode() {
   nvm install 26
   set -u
 
-  # Globals are per Node version, so these land on 26. corepack is no longer
-  # bundled with Node 25+.
+  # Globals are per version, so these land on 26. corepack is unbundled in 25+.
   npm install -g corepack @dotenvx/dotenvx
   corepack enable pnpm
   corepack enable yarn
+}
+
+# Not the AUR build, so upgrades are `oh-my-posh upgrade` rather than a rebuild.
+setupOhMyPosh() {
+  local installDir="$HOME/.local/bin"
+
+  if [[ -x "$installDir/oh-my-posh" ]]; then
+    log "oh-my-posh already installed — upgrading"
+    "$installDir/oh-my-posh" upgrade || warn "oh-my-posh upgrade failed — leaving the current build in place"
+    return
+  fi
+
+  log "Installing oh-my-posh"
+  mkdir -p "$installDir"
+  curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "$installDir"
 }
 
 # Installs to ~/.bun; both shell rc files already put ~/.bun/bin on PATH
@@ -444,10 +490,9 @@ setupBun() {
   curl -fsSL https://bun.com/install | bash
 }
 
-# Arch's Python is externally managed (PEP 668), so pip outside a venv is
-# refused. Activate with: source ~/.venv/bin/activate
+# PEP 668 refuses pip outside a venv. Path must match bashrc's activate line.
 setupPython() {
-  local venvDir="$HOME/.venv"
+  local venvDir="$HOME/venv"
 
   if [[ -d "$venvDir" ]]; then
     log "venv already exists at $venvDir — skipping"
@@ -459,12 +504,8 @@ setupPython() {
   "$venvDir/bin/python" -m pip install --upgrade pip setuptools wheel
 }
 
-# FONT_ZIPS entries are "destDirName|url". The URLs serve a zip via
-# Content-Disposition despite not ending in .zip. Fonts are flattened into
-# ~/.local/share/fonts/<destDirName>/ however deep the zip nests them.
+# FONT_ZIPS entries are "destDirName|url", flattened however deep the zip nests.
 setupFonts() {
-  ((${#FONT_ZIPS[@]})) || return 0
-
   log "Installing fonts"
 
   local fontsDir="$HOME/.local/share/fonts"
@@ -497,21 +538,39 @@ setupFonts() {
     rm -rf "$workDir"
   done
 
+  local fileUrl fileName
+  for fileUrl in "${FONT_FILES[@]}"; do
+    fileName="$(basename "${fileUrl%%\?*}")"
+
+    if [[ -s "$fontsDir/$fileName" ]]; then
+      log "Font '$fileName' already installed — skipping"
+      continue
+    fi
+
+    log "Downloading font: $fileName"
+    if ! curl -fsSL "$fileUrl" -o "$fontsDir/$fileName"; then
+      warn "failed to download '$fileName' from $fileUrl — skipping"
+      rm -f "$fontsDir/$fileName"
+    fi
+  done
+
+  log "Installing fonts bundled in the repo"
+  find "$SCRIPT_DIR/sddm-theme/font" -type f \( -iname '*.otf' -o -iname '*.ttf' \) \
+    -exec cp {} "$fontsDir/" \; 2>/dev/null || true
+
   log "Refreshing font cache"
   fc-cache -f "$fontsDir" > /dev/null
 }
 
-# Mirrors ~/.gitconfig. No secrets land here — gh keeps its token in its own
-# config and GCM keeps everything in secretservice. This only records which
-# helper answers for which host.
+# No secrets here — GCM keeps those in secretservice. Only which helper answers.
 setupGit() {
   log "Configuring git"
 
-  git config --global user.name "Clove Twilight"
-  git config --global user.email "admin@doughmination.win"
+  git config --global user.name "$GIT_USER_NAME"
+  git config --global user.email "$GIT_USER_EMAIL"
   git config --global core.pager cat
 
-  # helper is multi-valued, so clear it first or re-runs stack duplicates
+  # Clear first or re-runs stack. Unsetting github strips any stale gh helper.
   local key
   for key in \
     credential.helper \
@@ -521,21 +580,10 @@ setupGit() {
     git config --global --unset-all "$key" || true
   done
 
-  # The empty value is load-bearing: it drops anything /etc/gitconfig set
-  # before the real helper is appended
+  # The empty value is load-bearing: it drops whatever /etc/gitconfig set.
   git config --global --add credential.helper ''
   git config --global --add credential.helper /usr/bin/git-credential-manager
   git config --global credential.credentialStore secretservice
-
-  # gh handles github itself, ahead of GCM
-  local ghHost
-  for ghHost in \
-    https://github.com \
-    https://gist.github.com
-  do
-    git config --global --add "credential.$ghHost.helper" ''
-    git config --global --add "credential.$ghHost.helper" '!/usr/bin/gh auth git-credential'
-  done
 
   git config --global credential.https://dev.azure.com.useHttpPath true
 
@@ -548,6 +596,30 @@ setupGit() {
   do
     git config --global "credential.$genericHost.provider" generic
   done
+}
+
+# zram-generator ships no /etc config, so without this the package is inert.
+setupZram() {
+  local sourceFile="$SCRIPT_DIR/system/zram-generator.conf"
+  local destination="/etc/systemd/zram-generator.conf"
+
+  log "Configuring zram swap"
+
+  if [[ -e "$destination" ]] && ! cmp -s "$sourceFile" "$destination"; then
+    local backupDestination="$destination.bak-$(date +%Y%m%d-%H%M%S)"
+    warn "backing up existing $destination -> $backupDestination"
+    sudo cp "$destination" "$backupDestination"
+  fi
+
+  sudo install -Dm644 "$sourceFile" "$destination"
+}
+
+# Enable only — starting sddm here would kill the session running this.
+enableServices() {
+  ((${#SYSTEM_UNITS[@]})) || return 0
+
+  log "Enabling system services"
+  sudo systemctl enable "${SYSTEM_UNITS[@]}"
 }
 
 installPackages() {
@@ -568,21 +640,25 @@ main() {
     exit 1
   fi
 
+  promptIdentity
   configureSudo
   setupWallpaper
   setupDotfiles
   setupSddmTheme
   setupLocale
+  setupZram
   enableMultilib
   installYay
   setupNode
   installPackages
+  enableServices
   setupGit
+  setupOhMyPosh
   setupBun
   setupPython
   setupFonts
 
-  log "Done."
+  log "Done. Reboot to pick up the new services, locale and prompt."
 }
 
 main "$@"

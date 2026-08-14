@@ -1,15 +1,16 @@
 @use "sass:color";
 
-$bg: #120B10;
-$text: #FF4081;
-$text-dark: #777777;
-$purple: #C592FF;
-$yellow: #FFFC58;
+$bg: #040A10;
+$text: #ED91CA;
+$text-dark: #7D7F84;
+$purple: #9370DB;
+$yellow: #FDF500;
+$pink: #E455AE;
 
+// Was two declarations; the second silently overrode the first.
 * {
   all: unset;
-  font-family: feather;
-  font-family: DaddyTimeMono Nerd Font Mono;
+  font-family: "DaddyTimeMono Nerd Font Mono";
 }
 
 .cal {
@@ -18,11 +19,11 @@ $yellow: #FFFC58;
   font-size: 18px;
   font-weight: normal;
   border-radius: 14px;
-  border: 2px solid $purple;
+  border: 2px solid $pink;
 
   .cal-in {
     padding: 0px 10px 0px 10px;
-    color: #C0AECF;
+    color: #B8C7CA;
 
     .cal {
       &.highlight {
