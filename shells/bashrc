@@ -107,3 +107,8 @@ if command -v oh-my-posh >/dev/null 2>&1; then
 else
     PS1='\n\[\033[38;5;205m\]\u@\h \[\033[38;5;135m\][\w]\[\033[00m\]\n❯ '
 fi
+
+# Greeting: only for interactive shells on a real terminal
+if [[ $- == *i* ]] && [ -t 1 ] && command -v hyfetch >/dev/null 2>&1; then
+    hyfetch
+fi
