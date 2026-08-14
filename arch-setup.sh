@@ -248,7 +248,7 @@ setupDotfiles() {
   local file
   for file in .bashrc; do
     backup "$HOME/$file"
-    cp "$SCRIPT_DIR/shells/$file" "$HOME/$file"
+    cp "$SCRIPT_DIR/shells/bashrc" "$HOME/$file"
   done
 
   # home/* maps 1:1 into ~/. dotglob because every file there starts with a dot
