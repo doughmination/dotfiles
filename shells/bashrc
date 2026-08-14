@@ -65,6 +65,7 @@ alias bashedit='nano ~/.bashrc'
 alias bashreload='source ~/.bashrc'
 alias archeon='sudo pacman'
 alias sgh='ssh clove@shell.doughmination.win -p 421'
+alias sl='ls'
 
 # Sync repos to both github and my mirror
 alias gitsync='git push -u origin main && git push --mirror mirror'
