@@ -1,0 +1,113 @@
+# shells/zshrc
+# Doughmination Authorised Source Licence
+
+# ~/.zshrc: executed by zsh for interactive shells.
+# Portable across Arch and macOS; every platform bit is feature-detected.
+
+# If not running interactively, don't do anything
+[[ -o interactive ]] || return
+
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=1000
+SAVEHIST=2000
+
+setopt APPEND_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt SHARE_HISTORY
+
+# Homebrew on macOS: put brew on PATH before anything looks for its binaries
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# make less more friendly for non-text input files, see lesspipe(1)
+if command -v lesspipe >/dev/null 2>&1; then
+    eval "$(SHELL=/bin/sh lesspipe)"
+elif command -v lesspipe.sh >/dev/null 2>&1; then
+    export LESSOPEN="|lesspipe.sh %s"
+fi
+
+# Prompt is oh-my-posh, configured at the end of this file
+
+# enable color support of ls and also add handy aliases
+# GNU coreutils uses --color; macOS ships BSD ls, which uses -G
+if command -v dircolors >/dev/null 2>&1; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+elif command -v gdircolors >/dev/null 2>&1; then
+    test -r ~/.dircolors && eval "$(gdircolors -b ~/.dircolors)" || eval "$(gdircolors -b)"
+    alias ls='gls --color=auto'
+else
+    export CLICOLOR=1
+    alias ls='ls -G'
+fi
+
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
+# some ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Custom
+alias zshedit='nano ~/.zshrc'
+alias zshreload='source ~/.zshrc'
+alias sgh='ssh clove@shell.doughmination.win -p 421'
+alias sl='ls'
+
+# Package manager, whichever this machine has
+if command -v pacman >/dev/null 2>&1; then
+    alias archeon='sudo pacman'
+elif command -v brew >/dev/null 2>&1; then
+    alias archeon='brew'
+fi
+
+# Sync repos to both github and my mirror
+alias gitsync='git push -u origin main && git push --mirror mirror'
+
+# Clone a doughmination repo by name
+doughclone() {
+  git clone "https://github.com/doughmination/$1"
+}
+
+# Completions, plus a bash-completion shim for scripts that only ship bash ones
+autoload -Uz compinit && compinit
+autoload -Uz bashcompinit && bashcompinit
+
+# Case-insensitive completion, menu selection
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' menu select
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# local bin
+export PATH="$HOME/.local/bin:$PATH"
+
+# Load a venv, letting oh-my-posh own the prompt instead of the venv prefix
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+[ -f "$HOME/venv/bin/activate" ] && source "$HOME/venv/bin/activate"
+
+# Prompt (cyberpunk powerline), with a plain fallback if the binary is missing
+if command -v oh-my-posh >/dev/null 2>&1; then
+    eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
+else
+    PROMPT=$'\n%F{205}%n@%m %F{135}[%~]%f\n❯ '
+fi
+
+# Greeting: only for interactive shells on a real terminal
+if [ -t 1 ] && command -v hyfetch >/dev/null 2>&1; then
+    hyfetch
+fi
