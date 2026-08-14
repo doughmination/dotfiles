@@ -93,9 +93,9 @@ Rectangle {
         Row {
             spacing: 20 * s
             Text {
-                id: hT; text: Qt.formatTime(new Date(), "HH")
+                id: hT; text: Qt.formatTime(new Date(), "hh AP").split(" ")[0]
                 color: "white"; font.family: pf.name; font.pixelSize: 100 * s; font.letterSpacing: -5 * s
-                Timer { interval: 60000; running: true; repeat: true; onTriggered: hT.text = Qt.formatTime(new Date(), "HH") }
+                Timer { interval: 60000; running: true; repeat: true; onTriggered: hT.text = Qt.formatTime(new Date(), "hh AP").split(" ")[0] }
                 layer.enabled: true; layer.effect: DropShadow { color: "#80000000"; radius: 6; samples: 8; horizontalOffset: 2 * s; verticalOffset: 2 * s }
             }
             
@@ -106,6 +106,16 @@ Rectangle {
                 id: mT; text: Qt.formatTime(new Date(), "mm")
                 color: root.signTeal; font.family: pf.name; font.pixelSize: 100 * s; font.letterSpacing: -5 * s
                 Timer { interval: 1000; running: true; repeat: true; onTriggered: mT.text = Qt.formatTime(new Date(), "mm") }
+                layer.enabled: true; layer.effect: DropShadow { color: "#80000000"; radius: 6; samples: 8; horizontalOffset: 2 * s; verticalOffset: 2 * s }
+            }
+
+            // AM/PM
+            Text {
+                id: apT; text: Qt.formatTime(new Date(), "AP")
+                color: "white"; font.family: pf.name; font.pixelSize: 28 * s; font.letterSpacing: 2 * s
+                opacity: 0.85
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 18 * s
+                Timer { interval: 60000; running: true; repeat: true; onTriggered: apT.text = Qt.formatTime(new Date(), "AP") }
                 layer.enabled: true; layer.effect: DropShadow { color: "#80000000"; radius: 6; samples: 8; horizontalOffset: 2 * s; verticalOffset: 2 * s }
             }
         }

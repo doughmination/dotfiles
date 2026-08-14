@@ -130,12 +130,13 @@
         "modules": [
             "custom/clock-hours",
             "custom/clock-separator",
-            "custom/clock-minutes"
+            "custom/clock-minutes",
+            "custom/clock-ampm"
         ]
     },
     "custom/clock-hours": {
         "format": "{}",
-        "exec": "date '+%H'",
+        "exec": "date '+%I'",
         "tooltip": false,
         "interval": 1
     },
@@ -146,6 +147,12 @@
     "custom/clock-minutes": {
         "format": "{}",
         "exec": "date '+%M'",
+        "tooltip": false,
+        "interval": 1
+    },
+    "custom/clock-ampm": {
+        "format": "{}",
+        "exec": "date '+%p' | tr '[:lower:]' '[:upper:]'",
         "tooltip": false,
         "interval": 1
     },

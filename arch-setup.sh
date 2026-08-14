@@ -329,6 +329,48 @@ setupSddmTheme() {
   printf '[Theme]\nCurrent=%s\n' "$themeName" | sudo tee /etc/sddm.conf.d/theme.conf > /dev/null
 }
 
+# waybar/hyprlock/sddm format their own clocks, so they read 12-hour regardless
+# of this. This is what makes `date`, GTK and Qt apps agree with them — LC_TIME
+# points at a forked en_GB that is 12-hour but still DD/MM and £.
+# See system/locale/README.md. Takes effect on next login.
+setupLocale() {
+  local localeName="en_GB@12h"
+  local sourceDir="$SCRIPT_DIR/system/locale"
+
+  log "Installing $localeName locale"
+  sudo install -Dm644 "$sourceDir/$localeName" "/usr/share/i18n/locales/$localeName"
+
+  # locale.gen takes "<name> <charmap>". Note locale-gen then emits it as
+  # en_GB.UTF-8@12h, which is the name /etc/locale.conf has to use.
+  # Stock locale.gen lines carry trailing whitespace, so compare trimmed rather
+  # than with grep -qxF, which would miss them and append a duplicate.
+  local entry
+  for entry in 'en_GB.UTF-8 UTF-8' "$localeName UTF-8"; do
+    if awk -v want="$entry" '
+         { line = $0; gsub(/^[ \t]+|[ \t]+$/, "", line); if (line == want) found = 1 }
+         END { exit !found }
+       ' /etc/locale.gen; then
+      log "'$entry' already in /etc/locale.gen — skipping"
+    else
+      printf '%s\n' "$entry" | sudo tee -a /etc/locale.gen > /dev/null
+    fi
+  done
+
+  log "Generating locales"
+  sudo locale-gen
+
+  if [[ -e /etc/locale.conf ]] && ! cmp -s "$sourceDir/locale.conf" /etc/locale.conf; then
+    local backupDestination="/etc/locale.conf.bak-$(date +%Y%m%d-%H%M%S)"
+    warn "backing up existing /etc/locale.conf -> $backupDestination"
+    sudo cp /etc/locale.conf "$backupDestination"
+  fi
+
+  sudo install -Dm644 "$sourceDir/locale.conf" /etc/locale.conf
+
+  # Same formats again, for KDE apps launched from the sway session
+  cp "$sourceDir/plasma-localerc" "$HOME/.config/plasma-localerc"
+}
+
 # Needed for steam's 32-bit deps
 enableMultilib() {
   if grep -q '^\[multilib\]' /etc/pacman.conf; then
@@ -481,6 +523,7 @@ main() {
   setupWallpaper
   setupDotfiles
   setupSddmTheme
+  setupLocale
   enableMultilib
   installYay
   setupNode
