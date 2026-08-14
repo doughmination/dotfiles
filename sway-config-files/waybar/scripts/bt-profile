@@ -1,0 +1,60 @@
+#!/bin/bash
+# Toggle the connected bluetooth audio device between A2DP (stereo, no mic)
+# and headset mode (mono, with mic).
+#
+# Autoswitch is disabled in wireplumber.conf.d/51-bluez-no-autoswitch.conf, so
+# nothing does this on its own any more -- this is the manual escape hatch.
+
+export LC_ALL=C
+
+card=$(pactl list short cards | awk '/bluez_card/ { print $2; exit }')
+if [ -z "$card" ]; then
+    notify-send -a waybar "bluetooth" "no bluetooth audio device connected" 2>/dev/null
+    exit 0
+fi
+
+# "<name> <priority>" per line; the device offers several codecs per profile
+# family (AAC, SBC-XQ, SBC) and priority is what ranks them.
+profiles=$(pactl list cards | awk -v c="$card" '
+    $1 == "Name:" && $2 == c { found = 1 }
+    found && /^[ \t]*Profiles:/ { inprof = 1; next }
+    found && inprof && /^[ \t]*Active Profile:/ { exit }
+    found && inprof && /^[ \t]+[A-Za-z0-9_+-]+:[ \t]/ {
+        sub(/^[ \t]+/, "")
+        name = $0; sub(/:.*/, "", name)
+        prio = 0
+        if (match($0, /priority: [0-9]+/))
+            prio = substr($0, RSTART + 10, RLENGTH - 10)
+        print name, prio
+    }
+')
+
+active=$(pactl list cards | awk -v c="$card" '
+    $1 == "Name:" && $2 == c { found = 1 }
+    found && /Active Profile:/ { print $3; exit }
+')
+
+pick() {
+    # Highest-priority profile whose name matches $1.
+    echo "$profiles" | grep -E "$1" | sort -k2 -n | tail -1 | cut -d' ' -f1
+}
+
+case "$active" in
+    a2dp*|*bap*)
+        target=$(pick '^(headset-head-unit|headset-audio-gateway|handsfree)')
+        label="headset mode (mic on, mono)"
+        ;;
+    *)
+        target=$(pick '^(a2dp-sink|bap-sink)')
+        label="stereo mode (a2dp, no mic)"
+        ;;
+esac
+
+if [ -z "$target" ]; then
+    notify-send -a waybar "bluetooth" \
+        "no alternate profile offered by this device\nactive: $active" 2>/dev/null
+    exit 0
+fi
+
+pactl set-card-profile "$card" "$target" && \
+    notify-send -a waybar "bluetooth" "$label" 2>/dev/null

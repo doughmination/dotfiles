@@ -77,6 +77,38 @@ scale slider {
   margin: 1px 5px 0px 5px;
 }
 
+#custom-audio-device {
+  font-size: 14px;
+  color: #1AC5B0;
+  margin: 1px 10px 0px 5px;
+}
+
+#custom-audio-device.bluetooth {
+  color: #5DF4FE;
+}
+
+#bluetooth.icon {
+  color: #5DF4FE;
+  font-size: 18px;
+  margin: 0px 10px 0px 5px;
+}
+
+#bluetooth.icon.off,
+#bluetooth.icon.disabled {
+  color: #ED91CA;
+}
+
+#bluetooth.device {
+  font-size: 14px;
+  color: #5DF4FE;
+  margin: 1px 5px 0px 5px;
+}
+
+#bluetooth.device.off,
+#bluetooth.device.disabled {
+  color: #ED91CA;
+}
+
 #custom-separator {
   font-weight: bold;
   font-size: 27px;
@@ -215,11 +247,18 @@ window#waybar {
 #pulseaudio:hover,
 #network:hover,
 #custom-essid:hover,
+#custom-audio-device:hover,
 #custom-prev:hover,
 #custom-next:hover,
 #custom-play-pause:hover {
   color: #E8FBFD;
   text-shadow: 0 0 10px #1AC5B0, 0 0 20px #1AC5B0;
+}
+
+#bluetooth.icon:hover,
+#bluetooth.device:hover {
+  color: #E8FBFD;
+  text-shadow: 0 0 10px #5DF4FE, 0 0 20px #5DF4FE;
 }
 
 #custom-ram:hover,

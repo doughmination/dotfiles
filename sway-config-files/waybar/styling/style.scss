@@ -3,6 +3,7 @@
 $yellow: #FDF500;
 $blue: #1AC5B0;
 $green: #28C775;
+$cyan: #5DF4FE;
 
 // style.css is committed alongside this file and was hand-edited: "feather"
 // was dropped from the stack here to match it. Keep the two in step, or
@@ -84,6 +85,38 @@ scale slider {
   border-radius: 100%;
   color: $blue;
   margin: 1px 5px 0px 5px;
+}
+
+#custom-audio-device {
+  font-size: 14px;
+  color: $blue;
+  margin: 1px 10px 0px 5px;
+}
+
+#custom-audio-device.bluetooth {
+  color: $cyan;
+}
+
+#bluetooth.icon {
+  color: $cyan;
+  font-size: 18px;
+  margin: 0px 10px 0px 5px;
+}
+
+#bluetooth.icon.off,
+#bluetooth.icon.disabled {
+  color: #ED91CA;
+}
+
+#bluetooth.device {
+  font-size: 14px;
+  color: $cyan;
+  margin: 1px 5px 0px 5px;
+}
+
+#bluetooth.device.off,
+#bluetooth.device.disabled {
+  color: #ED91CA;
 }
 
 #custom-separator {
@@ -224,11 +257,18 @@ window#waybar {
 #pulseaudio:hover,
 #network:hover,
 #custom-essid:hover,
+#custom-audio-device:hover,
 #custom-prev:hover,
 #custom-next:hover,
 #custom-play-pause:hover {
   color: #E8FBFD;
   text-shadow: 0 0 10px #1AC5B0, 0 0 20px #1AC5B0;
+}
+
+#bluetooth.icon:hover,
+#bluetooth.device:hover {
+  color: #E8FBFD;
+  text-shadow: 0 0 10px $cyan, 0 0 20px $cyan;
 }
 
 #custom-ram:hover,

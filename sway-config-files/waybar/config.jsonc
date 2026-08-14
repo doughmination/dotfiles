@@ -18,6 +18,7 @@
     "modules-right": [
         "group/light",
         "group/audio",
+        "group/bluetooth",
         "group/wifi",
         "custom/separator",
         "battery",
@@ -73,19 +74,69 @@
         },
         "modules": [
             "pulseaudio",
-            "pulseaudio/slider"
+            "pulseaudio/slider",
+            "custom/audio-device"
         ]
     },
     "pulseaudio": {
         "format": "",
         "format-muted": "",
         "tooltip-format": "volume at {volume}%",
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pavucontrol"
     },
     "pulseaudio/slider": {
         "min": 0,
         "max": 100,
         "orientation": "horizontal"
+    },
+    "custom/audio-device": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 3,
+        "max-length": 24,
+        "exec": "$HOME/.config/waybar/scripts/audio-device",
+        "on-click": "$HOME/.config/waybar/scripts/audio-device next",
+        "on-click-right": "pavucontrol"
+    },
+    //##################// Bluetooth //##################//
+    "group/bluetooth": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 500,
+            "children-class": "bluetooth-drawer",
+            "transition-left-to-right": true
+        },
+        "modules": [
+            "bluetooth#icon",
+            "bluetooth#device"
+        ]
+    },
+    "bluetooth#icon": {
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "format-on": "󰂯",
+        "format-connected": "󰂱",
+        "tooltip-format": "{controller_alias}\nclick: blueman | middle: stereo/headset | right: power",
+        "tooltip-format-connected": "{controller_alias}\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias} {device_battery_percentage}%",
+        "on-click": "blueman-manager",
+        "on-click-middle": "$HOME/.config/waybar/scripts/bt-profile",
+        "on-click-right": "bluetoothctl show | grep -q 'Powered: yes' && bluetoothctl power off || bluetoothctl power on"
+    },
+    "bluetooth#device": {
+        "format": "off",
+        "format-disabled": "no adapter",
+        "format-off": "off",
+        "format-on": "not connected",
+        "format-connected": "{device_alias}",
+        "format-connected-battery": "{device_alias} {device_battery_percentage}%",
+        "tooltip": false,
+        "max-length": 24,
+        "on-click": "blueman-manager",
+        "on-click-middle": "$HOME/.config/waybar/scripts/bt-profile"
     },
     //###################// Network //###################//
     "group/wifi": {
