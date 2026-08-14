@@ -562,6 +562,29 @@ setupFonts() {
   fc-cache -f "$fontsDir" > /dev/null
 }
 
+# Unpackaged and not in the AUR, so the repo carries them for gtk to resolve.
+setupCursors() {
+  log "Installing cursor themes to ~/.icons"
+
+  local destinationDir="$HOME/.icons"
+  mkdir -p "$destinationDir"
+
+  local entry name destination
+  for entry in "$SCRIPT_DIR"/icons/*/; do
+    [[ -d "$entry" ]] || continue
+
+    name="$(basename "$entry")"
+    destination="$destinationDir/$name"
+
+    if [[ -d "$destination" ]]; then
+      log "Cursor theme '$name' already installed — skipping"
+      continue
+    fi
+
+    cp -r "$entry" "$destination"
+  done
+}
+
 # No secrets here — GCM keeps those in secretservice. Only which helper answers.
 setupGit() {
   log "Configuring git"
@@ -657,6 +680,7 @@ main() {
   setupBun
   setupPython
   setupFonts
+  setupCursors
 
   log "Done. Reboot to pick up the new services, locale and prompt."
 }
