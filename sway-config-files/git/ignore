@@ -1,0 +1,4 @@
+# git/ignore
+# Global gitignore, read from ~/.config/git/ignore by default
+
+**/.claude/settings.local.json

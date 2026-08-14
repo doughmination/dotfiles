@@ -160,6 +160,8 @@ AUR_PKGS=(
   docker-desktop
   equicord-installer-bin
   eww
+  git-credential-manager
+  git-credential-manager-extras
   oh-my-posh-bin
   spotify
   swayfx
@@ -499,6 +501,55 @@ setupFonts() {
   fc-cache -f "$fontsDir" > /dev/null
 }
 
+# Mirrors ~/.gitconfig. No secrets land here — gh keeps its token in its own
+# config and GCM keeps everything in secretservice. This only records which
+# helper answers for which host.
+setupGit() {
+  log "Configuring git"
+
+  git config --global user.name "Clove Twilight"
+  git config --global user.email "admin@doughmination.win"
+  git config --global core.pager cat
+
+  # helper is multi-valued, so clear it first or re-runs stack duplicates
+  local key
+  for key in \
+    credential.helper \
+    credential.https://github.com.helper \
+    credential.https://gist.github.com.helper
+  do
+    git config --global --unset-all "$key" || true
+  done
+
+  # The empty value is load-bearing: it drops anything /etc/gitconfig set
+  # before the real helper is appended
+  git config --global --add credential.helper ''
+  git config --global --add credential.helper /usr/bin/git-credential-manager
+  git config --global credential.credentialStore secretservice
+
+  # gh handles github itself, ahead of GCM
+  local ghHost
+  for ghHost in \
+    https://github.com \
+    https://gist.github.com
+  do
+    git config --global --add "credential.$ghHost.helper" ''
+    git config --global --add "credential.$ghHost.helper" '!/usr/bin/gh auth git-credential'
+  done
+
+  git config --global credential.https://dev.azure.com.useHttpPath true
+
+  # Hosts GCM cannot auto-detect — 'generic' means plain basic/bearer auth
+  local genericHost
+  for genericHost in \
+    https://backup.doughmination.gay \
+    http://127.0.0.1:4099 \
+    http://127.0.0.1:4199
+  do
+    git config --global "credential.$genericHost.provider" generic
+  done
+}
+
 installPackages() {
   if ((${#PACMAN_PKGS[@]})); then
     log "Refreshing, upgrading, and installing pacman packages"
@@ -526,6 +577,7 @@ main() {
   installYay
   setupNode
   installPackages
+  setupGit
   setupBun
   setupPython
   setupFonts
