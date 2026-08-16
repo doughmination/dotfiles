@@ -8,18 +8,23 @@
 #   screenshot -s -c      region     -> clipboard
 #   screenshot -w         focused window -> file
 #   screenshot -o FILE    explicit output path
+#   screenshot -r         toggle recording, fullscreen -> file
+#   screenshot -r -s      toggle recording, region     -> file
+#   screenshot -r -w      toggle recording, window     -> file
 
 set -uo pipefail
 
 DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+RECORD_DIR="${XDG_VIDEOS_DIR:-$HOME/Videos}/Recordings"
 OUTFILE=""
 REGION=
 WINDOW=
 COPY=
+RECORD=
 NOTIFY=1
 
 usage() {
-    echo "Usage: $0 [-s|--region] [-w|--activewindow] [-c|--copy] [-o|--output FILE] [-n|--no-notify]" >&2
+    echo "Usage: $0 [-s|--region] [-w|--activewindow] [-c|--copy] [-r|--record] [-o|--output FILE] [-n|--no-notify]" >&2
     exit 1
 }
 
@@ -28,6 +33,7 @@ while [ $# -gt 0 ]; do
         -s|--region|--select) REGION=1 ;;
         -w|--activewindow|--window) WINDOW=1 ;;
         -c|--copy) COPY=1 ;;
+        -r|--record) RECORD=1 ;;
         -n|--no-notify) NOTIFY= ;;
         -o|--output)
             shift; [ $# -gt 0 ] || { echo "Missing file path" >&2; exit 1; }
@@ -42,6 +48,13 @@ note() {
     [ -n "$NOTIFY" ] || return 0
     notify-send --app-name=screenshot "$1" "$2" || true
 }
+
+# Stop before any region prompt, so the same keybind toggles.
+# SIGINT rather than SIGKILL, or wf-recorder leaves the mp4 unfinalised.
+if [ -n "$RECORD" ] && pkill -INT -x wf-recorder 2>/dev/null; then
+    note "Recording stopped" "Saved to $RECORD_DIR"
+    exit 0
+fi
 
 # Geometry of the focused sway container, as grim expects it.
 read -r -d '' FOCUSED_RECT_PY <<'PY'
@@ -69,6 +82,26 @@ if [ -n "$REGION" ]; then
     [ -n "$GEOM" ] || exit 1
 elif [ -n "$WINDOW" ]; then
     GEOM=$(swaymsg -t get_tree | python3 -c "$FOCUSED_RECT_PY") || exit 1
+fi
+
+if [ -n "$RECORD" ]; then
+    mkdir -p "$RECORD_DIR"
+    RECFILE="$RECORD_DIR/$(date +%Y-%m-%d_%H-%M-%S).mp4"
+
+    # h264_vaapi encodes on the AMD iGPU, keeping the CPU mostly idle
+    REC_ARGS=(-f "$RECFILE" -c h264_vaapi -d /dev/dri/renderD128)
+    [ -n "$GEOM" ] && REC_ARGS+=(-g "$GEOM")
+
+    setsid wf-recorder "${REC_ARGS[@]}" >/dev/null 2>&1 &
+
+    sleep 1
+    if pgrep -x wf-recorder >/dev/null; then
+        note "Recording started" "$RECFILE"
+        exit 0
+    fi
+
+    note "Recording failed" "wf-recorder did not start"
+    exit 1
 fi
 
 grim_to() {

@@ -220,6 +220,8 @@ bindsym Print exec $ss -c
 bindsym Ctrl+Shift+Print exec $ss -s -c
 bindsym Ctrl+Print exec $ss
 bindsym Shift+Print exec $ss -s
+# Same bind starts and stops the recording
+bindsym Ctrl+Alt+Print exec $ss -r
 
 # Keyboard Layout
 bindsym $mod+k exec ~/.local/bin/switch-kb-layout

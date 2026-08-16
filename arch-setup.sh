@@ -80,6 +80,7 @@ PACMAN_PKGS=(
   swaylock
   swaync
   waybar
+  wf-recorder
   wl-clipboard
   wmenu
   xdg-desktop-portal-gtk
