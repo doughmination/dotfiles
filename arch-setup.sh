@@ -50,8 +50,10 @@ PACMAN_PKGS=(
   xorg-xinit
   xorg-xwayland
 
-  # networking
+  # networking — bluez is the daemon; bluez-utils is only the CLI tools
   bind
+  blueman
+  bluez
   bluez-utils
   iwd
   network-manager-applet
@@ -101,6 +103,9 @@ PACMAN_PKGS=(
   # credentials — GCM's secretservice store needs a keyring daemon
   gnome-keyring
 
+  # fingerprint — libfprint arrives as a dependency
+  fprintd
+
   # theming / fonts / toolkit config
   adw-gtk-theme
   dart-sass
@@ -126,6 +131,7 @@ PACMAN_PKGS=(
   foot
   htop
   hyfetch
+  jq
   kitty
   lazygit
   python
@@ -148,6 +154,7 @@ PACMAN_PKGS=(
   # desktop apps
   chromium
   firefox
+  flatpak
   git
   ibus
   inkscape
@@ -362,9 +369,24 @@ setupSddmTheme() {
   sudo cp -r "$SCRIPT_DIR/sddm-theme" "$destination"
   sudo chown -R root:root "$destination"
 
+  # theme.conf names the theme, so it has to stay in step with $themeName above
   log "Pointing sddm at $themeName"
-  sudo mkdir -p /etc/sddm.conf.d
-  printf '[Theme]\nCurrent=%s\n' "$themeName" | sudo tee /etc/sddm.conf.d/theme.conf > /dev/null
+  sudo install -Dm644 "$SCRIPT_DIR/sddm-config/sddm.conf.d/theme.conf" /etc/sddm.conf.d/theme.conf
+
+  # Adds pam_fprintd for fingerprint login. The sddm package owns this file, so
+  # upgrades will leave a .pacnew to merge by hand rather than updating ours.
+  log "Installing sddm PAM config"
+
+  local pamSource="$SCRIPT_DIR/sddm-config/pam.d/sddm"
+  local pamDestination="/etc/pam.d/sddm"
+
+  if [[ -e "$pamDestination" ]] && ! cmp -s "$pamSource" "$pamDestination"; then
+    local pamBackup="$pamDestination.bak-$(date +%Y%m%d-%H%M%S)"
+    warn "backing up existing $pamDestination -> $pamBackup"
+    sudo cp "$pamDestination" "$pamBackup"
+  fi
+
+  sudo install -Dm644 "$pamSource" "$pamDestination"
 }
 
 # A forked en_GB that is 12-hour but still DD/MM and £. See system/locale/README.md.
