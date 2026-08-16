@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# live-wallpaper
+
+set -uo pipefail
+
+# Animated wallpaper; override by passing a path as the first argument
+videoPath="${1:-$HOME/Pictures/live-wallpaper.mp4}"
+
+# Shown when the video is missing or mpvpaper cannot start
+fallbackImage="$HOME/Pictures/wallpaper.jpg"
+
+# hwdec=vaapi uses the AMD iGPU decoder instead of the CPU
+mpvOptions="no-audio loop hwdec=vaapi vo=gpu"
+
+# Never leave a second copy running across a sway reload
+pkill -x mpvpaper 2>/dev/null
+
+sleep 0.2
+
+if [[ ! -r "$videoPath" ]]; then
+  exec swaybg \
+    -o '*' \
+    -i "$fallbackImage" \
+    -m fill
+fi
+
+# The bottom layer sits above the swaybg sway spawns on reload,
+# and still below every window
+exec mpvpaper \
+  --fork \
+  --auto-pause \
+  --auto-mode MAX \
+  --layer bottom \
+  --mpv-options "$mpvOptions" \
+  '*' \
+  "$videoPath"

@@ -230,7 +230,9 @@ bindsym $mod+k exec ~/.local/bin/switch-kb-layout
 default_border pixel 3
 gaps inner 5
 gaps outer 7
-output * bg ~/Pictures/wallpaper.jpg fill
+# Wallpaper is owned by ~/.local/bin/live-wallpaper
+# It runs mpvpaper, and falls back to swaybg if the video is missing
+exec_always --no-startup-id ~/.local/bin/live-wallpaper
 
 # Opacity
 for_window [class=".*"] opacity set 0.75

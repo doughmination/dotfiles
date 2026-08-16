@@ -70,6 +70,7 @@ PACMAN_PKGS=(
   grim
   hypridle
   hyprlock
+  mpv
   playerctl
   polkit-kde-agent
   rofi
@@ -183,6 +184,7 @@ AUR_PKGS=(
   eww
   git-credential-manager
   git-credential-manager-extras
+  mpvpaper
   swayfx
   vscodium-bin
   wlogout
