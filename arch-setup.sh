@@ -157,6 +157,7 @@ PACMAN_PKGS=(
   firefox
   flatpak
   git
+  git-lfs
   ibus
   inkscape
   librewolf
@@ -616,6 +617,9 @@ setupGit() {
   git config --global user.name "$GIT_USER_NAME"
   git config --global user.email "$GIT_USER_EMAIL"
   git config --global core.pager cat
+
+  # Registers the LFS filters; wallpapers/*.mp4 is stored via LFS
+  git lfs install
 
   # Clear first or re-runs stack. Unsetting github strips any stale gh helper.
   local key
