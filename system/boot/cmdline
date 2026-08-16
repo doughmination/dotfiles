@@ -1,0 +1,1 @@
+root=PARTUUID=ab987c41-2636-4bab-89d9-402ca57660ae zswap.enabled=0 rw rootfstype=ext4 quiet splash loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0

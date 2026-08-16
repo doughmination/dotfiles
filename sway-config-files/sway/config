@@ -178,13 +178,7 @@ bindsym $mod+Shift+minus move scratchpad
 # If there are multiple scratchpad windows, this command cycles through them.
 bindsym $mod+minus scratchpad show
 
-# Resizing containers:
-#
 mode "resize" {
-    # left will shrink the containers width
-    # right will grow the containers width
-    # up will shrink the containers height
-    # down will grow the containers height
     bindsym Left resize shrink width 10px
     bindsym Down resize grow height 10px
     bindsym Up resize shrink height 10px
@@ -199,8 +193,6 @@ bindsym $mod+r mode "resize"
 # Laptop Lid
 bindswitch lid:on exec --no-startup-id hyprlock
 
-# Function Keys
-#
 # Volume
 bindsym XF86AudioRaiseVolume        exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0
 bindsym XF86AudioLowerVolume        exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05- -l 1.0
@@ -223,8 +215,10 @@ bindsym Shift+Print exec $ss -s
 # Same bind starts and stops the recording
 bindsym Ctrl+Alt+Print exec $ss -r
 
-# Keyboard Layout
-bindsym $mod+k exec ~/.local/bin/switch-kb-layout
+# Music config
+bindsym $mod+a exec playerctl previous
+bindsym $mod+d exec playerctl next
+bindsym $mod+s exec playerctl play-pause
 
 ### Window Rules
 #
@@ -252,4 +246,3 @@ for_window [app_id="virt-manager"] blur disable
 for_window [app_id="com.obsproject.Studio"] blur disable
 
 include /etc/sway/config.d/*
-

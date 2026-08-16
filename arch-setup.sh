@@ -31,6 +31,7 @@ PACMAN_PKGS=(
   linux
   linux-firmware
   mkinitcpio
+  plymouth
   sbctl
   sudo
   zram-generator
@@ -686,6 +687,79 @@ installPackages() {
   fi
 }
 
+backupIfDiffers() {
+  local sourceFile="$1"
+  local destination="$2"
+
+  [[ -e "$destination" ]] || return 0
+  cmp -s "$sourceFile" "$destination" && return 0
+
+  local backupDestination="$destination.bak-$(date +%Y%m%d-%H%M%S)"
+  warn "backing up existing $destination -> $backupDestination"
+  sudo cp "$destination" "$backupDestination"
+}
+
+setupSilentBoot() {
+  local sourceDir="$SCRIPT_DIR/system/boot"
+
+  log "Configuring silent graphical boot"
+
+  # Params live inside the UKI, so loader entries are not involved
+  if [[ ! -d /boot/EFI/Linux ]]; then
+    warn "no UKI directory at /boot/EFI/Linux — skipping boot config"
+    return
+  fi
+
+  # root= is per-disk, so read it live rather than trust the backed-up value
+  local rootPartUuid
+  local rootFsType
+  rootPartUuid="$(findmnt -no PARTUUID /)"
+  rootFsType="$(findmnt -no FSTYPE /)"
+
+  if [[ -z "$rootPartUuid" ]]; then
+    warn "could not read the root PARTUUID — skipping boot config"
+    return
+  fi
+
+  local generatedCmdline
+  generatedCmdline="$(mktemp)"
+
+  awk -v uuid="$rootPartUuid" -v fstype="$rootFsType" '
+    {
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /^root=/)            $i = "root=PARTUUID=" uuid
+        else if ($i ~ /^rootfstype=/) $i = "rootfstype=" fstype
+      }
+      print
+    }
+  ' "$sourceDir/cmdline" > "$generatedCmdline"
+
+  backupIfDiffers "$generatedCmdline" /etc/kernel/cmdline
+  sudo install -Dm644 "$generatedCmdline" /etc/kernel/cmdline
+  rm -f "$generatedCmdline"
+
+  backupIfDiffers "$sourceDir/mkinitcpio.conf" /etc/mkinitcpio.conf
+  sudo install -Dm644 "$sourceDir/mkinitcpio.conf" /etc/mkinitcpio.conf
+
+  backupIfDiffers "$sourceDir/plymouthd.conf" /etc/plymouth/plymouthd.conf
+  sudo install -Dm644 "$sourceDir/plymouthd.conf" /etc/plymouth/plymouthd.conf
+
+  backupIfDiffers "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
+  sudo install -Dm644 "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
+
+  # The ESP is vfat, so copy without trying to set a mode
+  if [[ -d /boot/loader ]]; then
+    backupIfDiffers "$sourceDir/loader.conf" /boot/loader/loader.conf
+    sudo cp "$sourceDir/loader.conf" /boot/loader/loader.conf
+  fi
+
+  log "Rebuilding the unified kernel image"
+  sudo mkinitcpio -P
+
+  # The EFI variable overrides loader.conf, so set both
+  sudo bootctl set-timeout 0
+}
+
 main() {
   if [[ ${EUID} -eq 0 ]]; then
     warn "Run this as your normal user, not root. Aborting."
@@ -703,6 +777,7 @@ main() {
   installYay
   setupNode
   installPackages
+  setupSilentBoot
   enableServices
   setupGit
   setupOhMyPosh
