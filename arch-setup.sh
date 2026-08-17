@@ -438,6 +438,7 @@ enableMultilib() {
 
   # DBs get synced by the -Syu in installPackages
   sudo sed -i '/^#\s*\[multilib\]/,/^#\s*Include/ s/^#\s*//' /etc/pacman.conf
+  sudo pacman -Sy
 }
 
 installYay() {
@@ -794,18 +795,15 @@ main() {
     warn "Run this as your normal user, not root. Aborting."
     exit 1
   fi
-
+  git lfs pull
   promptIdentity
   configureSudo
-  setupWallpaper
-  setupDotfiles
-  setupSddmTheme
-  setupLocale
-  setupZram
   enableMultilib
   installYay
-  setupNode
   installPackages
+  setupLocale
+  setupZram
+  setupNode
   setupSilentBoot
   enableServices
   setupGit
@@ -815,6 +813,9 @@ main() {
   setupFonts
   setupCursors
   setupCaelestia
+  setupWallpaper
+  setupDotfiles
+  setupSddmTheme
 
   log "Done. Reboot to pick up the new services, locale and prompt."
 }

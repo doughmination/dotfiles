@@ -240,7 +240,14 @@ gaps inner 5
 # reserves the bar strip - do NOT add a full-width left gap, it double-counts and
 # leaves a dead band. Window x lands at gaps_left + 65, and the bar edge is at 60,
 # so left 10 gives a 15px visual gap, matching the top/bottom.
-gaps outer 7
+#
+# outer must stay >= 12: swayfx (0.6) fails to paint the window border on an
+# edge when that edge's clearance from its layer-shell exclusion zone is too
+# small (works fine at 12px clearance, breaks at 9px) - only noticeable here
+# because caelestia's own top/right/bottom exclusion zones are just
+# Config.border.thickness (10px), unlike the bar's much larger left one.
+# Tested against swayfx 0.6; re-check this if swayfx is updated.
+gaps outer 12
 gaps left 10
 # Wallpaper is drawn by caelestia's background module
 # ~/.local/bin/live-wallpaper still exists if the mpvpaper one is wanted back

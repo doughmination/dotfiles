@@ -5,6 +5,10 @@ Personal dotfiles for a SwayFX session on Arch Linux.
 ## Install
 
 ```bash
+sudo pacman -S git git-lfs
+git clone https://github.com/doughmination/dotfiles
+git lfs install
+cd dotfiles
 ./arch-setup.sh
 ```
 
