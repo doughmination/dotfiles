@@ -153,14 +153,12 @@ PACMAN_PKGS=(
   zip
 
   # desktop apps
-  chromium
   firefox
   flatpak
   git
   git-lfs
   ibus
   inkscape
-  librewolf
   libreoffice-fresh
   obs-studio
   prismlauncher
