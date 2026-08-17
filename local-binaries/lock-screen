@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# lock-screen
+
+# Locks the session using caelestia's lock screen.
+# Kept as a wrapper rather than binding the IPC call directly so the lid switch
+# and the keybind share one place to change.
+
+set -uo pipefail
+
+if [[ $(caelestia shell lock isLocked 2>/dev/null) == "true" ]]; then
+    exit 0
+fi
+
+if caelestia shell lock lock 2>/dev/null; then
+    exit 0
+fi
+
+# The shell was not running, so nothing locked. Say so loudly rather than
+# leaving the session open in silence.
+if command -v notify-send >/dev/null; then
+    notify-send -u critical "lock-screen" "caelestia is not running - session NOT locked"
+fi
+
+exit 1

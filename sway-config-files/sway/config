@@ -3,9 +3,11 @@ include cyberpunk
 ### Startup
 #
 # Startup Scripts
-exec --no-startup-id waybar
-exec --no-startup-id swaync
-exec --no-startup-id ~/.local/bin/low_bat_run
+# caelestia owns the bar, notifications and tray now
+# exec_always so `swaymsg reload` restarts the shell too, picking up any
+# QML/config patches. The script refuses to restart while the session is locked,
+# which would kill the lock client and leave sway showing a dead red screen.
+exec_always --no-startup-id ~/.local/bin/caelestia-reload
 exec --no-startup-id autotiling
 
 # Polkit authentication agent (needed for fprintd enroll, udisks, etc.)
@@ -31,12 +33,15 @@ input type:keyboard {
 set $mod Mod4
 set $term kitty
 set $browser librewolf
-set $bar pkill waybar || waybar
-set $launcher rofi -show drun -config ~/.config/rofi/sway.rasi
-set $logout rofi -show menu -modi 'menu:~/.local/share/rofi/scripts/rofi-power-menu --choices=logout/suspend/reboot/shutdown' -config ~/.config/rofi/power.rasi
+set $bar caelestia shell drawers toggle bar
+set $lock ~/.local/bin/lock-screen
+set $launcher caelestia shell drawers toggle launcher
+set $logout caelestia shell drawers toggle session
+set $dashboard caelestia shell drawers toggle dashboard
+set $sidebar caelestia shell drawers toggle sidebar
 set $files kitty -e yazi
 set $ss ~/.local/bin/screenshot
-set $notification swaync-client -t -sw
+set $notification caelestia shell drawers toggle sidebar
 set $clipboard cliphist list | rofi -dmenu -i -p "clip" -config ~/.config/rofi/sway.rasi | cliphist decode | wl-copy
 set $clipwipe cliphist wipe
 
@@ -61,12 +66,16 @@ blur_noise 0.02
 shadows enable
 shadows_on_csd enable
 shadow_blur_radius 28
+
+# Frosted panels for the caelestia shell.
+# Caelestia asks Hyprland for this via a layerrule, which does nothing here,
+# so swayfx has to be told directly. Its bar and drawers share one surface.
+layer_effects "caelestia-drawers" blur enable; blur_ignore_transparent enable; shadows enable
 shadow_offset 0 0
 shadow_color #E455AECC
 shadow_inactive_color #1AC5B055
 
 # Glass treatment for the bar, launcher and notifications
-layer_effects "waybar" blur enable; shadows enable; corner_radius 14
 layer_effects "rofi" blur enable; shadows enable; corner_radius 16
 
 # inactive window fade amount. 0.0 = no dimming, 1.0 = fully dimmed
@@ -104,8 +113,9 @@ bindsym $mod+q kill
 bindsym $mod+space exec $launcher
 bindsym $mod+f exec $browser
 bindsym $mod+b exec $bar
+bindsym $mod+grave exec $dashboard
 bindsym $mod+e exec $files
-bindsym $mod+Mod1+l exec hyprlock
+bindsym $mod+Mod1+l exec $lock
 bindsym $mod+n exec $notification
 bindsym $mod+v exec $clipboard
 bindsym $mod+Shift+v exec $clipwipe
@@ -164,8 +174,8 @@ bindsym $mod+Mod1+8 move container to workspace number 8
 bindsym $mod+Mod1+9 move container to workspace number 9
 
 # Switch next or previous workspace
-bindsym $mod+Ctrl+Left exec --no-startup-id swaymsg workspace number $(~/Desktop/.Scripts/ws-prev)
-bindsym $mod+Ctrl+Right exec --no-startup-id swaymsg workspace number $(~/Desktop/.Scripts/ws-next)
+bindsym $mod+Ctrl+Left workspace prev_on_output
+bindsym $mod+Ctrl+Right workspace next_on_output
 
 # Layout stuff:
 #
@@ -191,7 +201,7 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 # Laptop Lid
-bindswitch lid:on exec --no-startup-id hyprlock
+bindswitch lid:on exec --no-startup-id $lock
 
 # Volume
 bindsym XF86AudioRaiseVolume        exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0
@@ -225,10 +235,15 @@ bindsym $mod+s exec playerctl play-pause
 # Appearance
 default_border pixel 3
 gaps inner 5
+
+# caelestia's bar sets its own layer-shell exclusive zone (60px), so sway already
+# reserves the bar strip - do NOT add a full-width left gap, it double-counts and
+# leaves a dead band. Window x lands at gaps_left + 65, and the bar edge is at 60,
+# so left 10 gives a 15px visual gap, matching the top/bottom.
 gaps outer 7
-# Wallpaper is owned by ~/.local/bin/live-wallpaper
-# It runs mpvpaper, and falls back to swaybg if the video is missing
-exec_always --no-startup-id ~/.local/bin/live-wallpaper
+gaps left 10
+# Wallpaper is drawn by caelestia's background module
+# ~/.local/bin/live-wallpaper still exists if the mpvpaper one is wanted back
 
 # Opacity
 for_window [class=".*"] opacity set 0.75

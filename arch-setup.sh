@@ -69,8 +69,8 @@ PACMAN_PKGS=(
   brightnessctl
   cliphist
   grim
+  libnotify
   hypridle
-  hyprlock
   mpv
   playerctl
   polkit-kde-agent
@@ -79,8 +79,6 @@ PACMAN_PKGS=(
   swaybg
   swayidle
   swaylock
-  swaync
-  waybar
   wf-recorder
   wl-clipboard
   wmenu
@@ -181,16 +179,15 @@ PACMAN_PKGS=(
 # yay and oh-my-posh are absent on purpose — installYay and setupOhMyPosh
 AUR_PKGS=(
   archy-screenshot
+  caelestia-cli
+  caelestia-shell
   discord-canary
   docker-desktop
   equicord-installer-bin
-  eww
   git-credential-manager
   git-credential-manager-extras
-  mpvpaper
   swayfx
   vscodium-bin
-  wlogout
   zen-browser-bin
 )
 
@@ -590,6 +587,38 @@ setupFonts() {
 }
 
 # Unpackaged and not in the AUR, so the repo carries them for gtk to resolve.
+# caelestia is built for Hyprland and ships zero sway support. These patches are
+# what make it usable here: without them the workspace pill stays empty and every
+# drawers IPC call silently no-ops, so the launcher, session menu and dashboard
+# keybinds do nothing at all.
+setupCaelestia() {
+  local shellDir="/etc/xdg/quickshell/caelestia"
+  local patchFile="$HOME/.config/caelestia/sway-fixes.patch"
+
+  log "Installing caelestia colour scheme"
+  install -Dm644 "$SCRIPT_DIR/caelestia-state/scheme.json" \
+    "$HOME/.local/state/caelestia/scheme.json"
+
+  if [[ ! -d "$shellDir" ]]; then
+    warn "caelestia-shell is not installed; skipping its sway patches"
+    return 0
+  fi
+
+  if [[ ! -f "$patchFile" ]]; then
+    warn "no sway-fixes.patch in ~/.config/caelestia; skipping"
+    return 0
+  fi
+
+  # --forward makes a re-run a no-op rather than offering to reverse the patch
+  if sudo patch -d "$shellDir" -p0 --forward --dry-run < "$patchFile" >/dev/null 2>&1; then
+    log "Applying caelestia sway patches"
+    sudo patch -d "$shellDir" -p0 --forward < "$patchFile" >/dev/null
+  else
+    warn "caelestia sway patches already applied, or no longer apply cleanly"
+    warn "if caelestia was just updated, re-diff them against the new version"
+  fi
+}
+
 setupCursors() {
   log "Installing cursor themes to ~/.icons"
 
@@ -785,6 +814,7 @@ main() {
   setupPython
   setupFonts
   setupCursors
+  setupCaelestia
 
   log "Done. Reboot to pick up the new services, locale and prompt."
 }

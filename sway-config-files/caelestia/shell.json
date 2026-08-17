@@ -1,0 +1,33 @@
+{
+    "appearance": {
+        "transparency": {
+            "base": 0.78,
+            "enabled": true,
+            "layers": 0.4
+        }
+    },
+    "bar": {
+        "workspaces": {
+            "perMonitorWorkspaces": false
+        }
+    },
+    "general": {
+        "apps": {
+            "audio": [
+                "xfce4-about"
+            ],
+            "terminal": [
+                "kitty"
+            ]
+        }
+    },
+    "lock": {
+        "maxFprintTries": 15,
+        "useWallpaper": true
+    },
+    "services": {
+        "useFahrenheit": false,
+        "useTwelveHourClock": true,
+        "weatherLocation": "53.3811,-1.4701"
+    }
+}

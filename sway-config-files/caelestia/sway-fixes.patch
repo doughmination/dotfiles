@@ -1,0 +1,202 @@
+--- services/ShellState.qml.orig	2026-08-17 01:54:13.397891854 +0100
++++ services/ShellState.qml	2026-08-17 03:10:30.107388705 +0100
+@@ -22,6 +22,12 @@
+ 
+     function forActive(): ScreenState {
+         const mon = Hypr.focusedMonitor;
++        // Not on Hyprland (e.g. sway): fall back to the first screen. Must test
++        // onHyprland, NOT `!mon` - Hypr.focusedMonitor returns a non-null adapter object
++        // on sway, and two adapter objects are never === equal, so the loop below would
++        // fall through to null and silently no-op every drawers IPC call.
++        if (!Hypr.onHyprland)
++            return states.instances[0] ?? null;
+         for (const s of states.instances)
+             if (Hypr.monitorFor(s.modelData) === mon)
+                 return s;
+--- services/Hypr.qml.orig	2026-08-17 02:35:13.481148938 +0100
++++ services/Hypr.qml	2026-08-17 02:39:23.237672293 +0100
+@@ -3,6 +3,7 @@
+ import QtQuick
+ import Quickshell
+ import Quickshell.Hyprland
++import Quickshell.I3
+ import Quickshell.Io
+ import Caelestia
+ import Caelestia.Config
+@@ -12,17 +13,68 @@
+ Singleton {
+     id: root
+ 
++    // Nothing but Hyprland sets HYPRLAND_INSTANCE_SIGNATURE; on sway fall back to i3 IPC.
++    // Sway objects are reshaped to look Hyprland-ish so the bar components need no changes:
++    // Hyprland's workspace `id` is the workspace number, sway's is an internal container id
++    // (the number is `num`), and sway has no special workspaces.
++    readonly property bool onHyprland: !!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
++
++    function adaptWorkspace(w): var {
++        if (!w)
++            return null;
++        return {
++            id: w.num,
++            name: w.name,
++            monitor: w.monitor,
++            // consumers do `.toplevels.values` guarded only on the workspace itself
++            toplevels: {
++                values: []
++            },
++            lastIpcObject: {
++                windows: w.lastIpcObject?.focus?.length ?? 0
++            }
++        };
++    }
++
++    function adaptMonitor(m): var {
++        // Never null: consumers do `monitorFor(screen).activeWorkspace`, unguarded, and
++        // this is evaluated once before the lazy i3 refresh has populated anything
++        if (!m)
++            return {
++                id: -1,
++                name: "",
++                activeWorkspace: null,
++                lastIpcObject: {
++                    specialWorkspace: {
++                        name: ""
++                    }
++                }
++            };
++        return {
++            id: m.id,
++            name: m.name,
++            activeWorkspace: root.adaptWorkspace(m.activeWorkspace),
++            lastIpcObject: {
++                specialWorkspace: {
++                    name: ""
++                }
++            }
++        };
++    }
++
+     readonly property var toplevels: Hyprland.toplevels
+-    readonly property var workspaces: Hyprland.workspaces
+-    readonly property var monitors: Hyprland.monitors
+-    readonly property bool usingLua: Hyprland.usingLua
++    readonly property var workspaces: onHyprland ? Hyprland.workspaces : ({
++            values: I3.workspaces.values.map(w => root.adaptWorkspace(w))
++        })
++    readonly property var monitors: onHyprland ? Hyprland.monitors : I3.monitors
++    readonly property bool usingLua: onHyprland && Hyprland.usingLua
+ 
+     readonly property HyprlandToplevel activeToplevel: {
+         const t = Hyprland.activeToplevel;
+         return t?.workspace?.name.startsWith("special:") || Hyprland.focusedWorkspace?.toplevels.values.length > 0 ? t : null;
+     }
+-    readonly property HyprlandWorkspace focusedWorkspace: Hyprland.focusedWorkspace
+-    readonly property HyprlandMonitor focusedMonitor: Hyprland.focusedMonitor
++    readonly property var focusedWorkspace: onHyprland ? Hyprland.focusedWorkspace : root.adaptWorkspace(I3.focusedWorkspace)
++    readonly property var focusedMonitor: onHyprland ? Hyprland.focusedMonitor : root.adaptMonitor(I3.focusedMonitor)
+     readonly property int activeWsId: focusedWorkspace?.id ?? 1
+ 
+     readonly property HyprKeyboard keyboard: extras.devices.keyboards.find(kb => kb.main) ?? null
+@@ -42,8 +94,24 @@
+ 
+     signal configReloaded
+ 
++    // The i3/sway IPC module populates lazily, unlike the Hyprland one. Without this
++    // kick, workspaces and monitors stay empty forever and the bar pill renders blank.
++    Timer {
++        running: !root.onHyprland
++        interval: 100
++        repeat: false
++
++        onTriggered: {
++            I3.refreshWorkspaces();
++            I3.refreshMonitors();
++        }
++    }
++
+     function dispatch(request: string): void {
+-        Hyprland.dispatch(request);
++        if (onHyprland)
++            Hyprland.dispatch(request);
++        else
++            I3.dispatch(request);
+     }
+ 
+     function cycleSpecialWorkspace(direction: string): void {
+@@ -83,8 +151,8 @@
+         return monitors.values.map(e => e.name);
+     }
+ 
+-    function monitorFor(screen: ShellScreen): HyprlandMonitor {
+-        return Hyprland.monitorFor(screen);
++    function monitorFor(screen: ShellScreen): var {
++        return onHyprland ? Hyprland.monitorFor(screen) : root.adaptMonitor(I3.monitorFor(screen));
+     }
+ 
+     function reloadDynamicConfs(): void {
+@@ -160,7 +228,7 @@
+             }
+         }
+ 
+-        target: root.focusedMonitor
++        target: root.onHyprland ? root.focusedMonitor : null
+     }
+ 
+     FileView {
+--- modules/drawers/ContentWindow.qml.orig	2026-08-17 02:14:36.211291396 +0100
++++ modules/drawers/ContentWindow.qml	2026-08-17 02:56:30.510695157 +0100
+@@ -21,7 +21,7 @@
+ 
+     readonly property ScreenState screenState: ShellState.forScreen(screen)
+ 
+-    readonly property HyprlandMonitor monitor: Hypr.monitorFor(screen)
++    readonly property var monitor: Hypr.monitorFor(screen)
+     readonly property bool hasSpecialWorkspace: (monitor?.lastIpcObject.specialWorkspace?.name.length ?? 0) > 0
+     readonly property bool hasFullscreenOnNormalWs: monitor?.activeWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen > 1) ?? false
+     readonly property bool hasFullscreen: {
+@@ -48,6 +48,12 @@
+         if (focusGrab.active || panels.popouts.isDetached)
+             return 0;
+ 
++        // Not on Hyprland (e.g. sway): the window-count check below can't work, so never
++        // claim the drag margin. Must test onHyprland, NOT `!monitor` - Hypr.monitorFor()
++        // returns a non-null adapter object on sway.
++        if (!Hypr.onHyprland)
++            return 0;
++
+         if (monitor?.lastIpcObject.specialWorkspace?.name || monitor?.activeWorkspace?.lastIpcObject.windows > 0)
+             return 0;
+ 
+@@ -68,7 +74,7 @@
+     name: "drawers"
+     WlrLayershell.exclusionMode: ExclusionMode.Ignore
+     WlrLayershell.layer: (fsTransitionProg > 0 && contentItem.Config.general.showOverFullscreen) || (hasSpecialWorkspace && hasFullscreenOnNormalWs) ? WlrLayer.Overlay : WlrLayer.Top
+-    WlrLayershell.keyboardFocus: screenState.launcher || screenState.session ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
++    WlrLayershell.keyboardFocus: screenState.launcher || screenState.session ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+ 
+     mask: hasFullscreen ? emptyRegion : regions
+ 
+--- modules/bar/components/workspaces/SpecialWorkspaces.qml.orig	2026-08-17 02:36:09.952999210 +0100
++++ modules/bar/components/workspaces/SpecialWorkspaces.qml	2026-08-17 02:36:09.953131358 +0100
+@@ -14,7 +14,7 @@
+     id: root
+ 
+     required property ShellScreen screen
+-    readonly property HyprlandMonitor monitor: Hypr.monitorFor(screen)
++    readonly property var monitor: Hypr.monitorFor(screen)
+     readonly property string activeSpecial: (GlobalConfig.bar.workspaces.perMonitorWorkspaces ? monitor : Hypr.focusedMonitor)?.lastIpcObject.specialWorkspace?.name ?? ""
+ 
+     layer.enabled: true
+--- modules/areapicker/Picker.qml.orig	2026-08-17 03:11:43.422081120 +0100
++++ modules/areapicker/Picker.qml	2026-08-17 03:11:43.422346031 +0100
+@@ -35,7 +35,9 @@
+ 
+     property list<var> clients: {
+         const mon = Hypr.monitorFor(screen);
+-        if (!mon)
++        // On sway there are no Hyprland toplevels to snap to, and the adapter's
++        // activeWorkspace is null until the lazy i3 refresh lands
++        if (!Hypr.onHyprland || !mon)
+             return [];
+ 
+         const special = mon.lastIpcObject.specialWorkspace;

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# caelestia-reload
+
+# Restart the caelestia shell so a sway reload picks up config/QML changes.
+#
+# Refuses to do so while the session is locked. caelestia's lock is the session
+# lock client; killing it while it holds the lock leaves sway with a locked
+# session and no client, which renders as a solid red screen that cannot be
+# dismissed - the only way out is a hard reboot.
+
+set -uo pipefail
+
+if [[ $(caelestia shell lock isLocked 2>/dev/null) == "true" ]]; then
+    exit 0
+fi
+
+caelestia shell -k 2>/dev/null
+
+sleep 1
+
+caelestia shell -d

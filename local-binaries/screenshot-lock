@@ -1,0 +1,22 @@
+#!/bin/bash
+# Screenshot the lock screen.
+#
+# The lock grabs all input, so the normal Print keybind can't reach sway while
+# locked. Instead, queue grim in the background, then lock; grim fires on a
+# timer once the lock surface is already on screen.
+#
+#   screenshot-lock         5s delay (default)
+#   screenshot-lock 3       custom delay in seconds
+
+set -uo pipefail
+
+DELAY="${1:-5}"
+DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+OUT="$DIR/lockscreen-$(date +'%Y-%m-%d-%H%M%S').png"
+
+mkdir -p "$DIR"
+
+# Detach so it survives and fires while the lock holds the session.
+setsid --fork bash -c "sleep $DELAY; grim '$OUT'" >/dev/null 2>&1
+
+exec "$HOME/.local/bin/lock-screen"
