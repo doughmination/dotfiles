@@ -2,6 +2,8 @@
 
 Personal dotfiles for a SwayFX session on Arch Linux.
 
+Any issues please use the GitHub Issue Tracker
+
 ## Install
 
 ```bash
