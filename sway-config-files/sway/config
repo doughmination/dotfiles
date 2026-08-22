@@ -230,6 +230,9 @@ bindsym $mod+a exec playerctl previous
 bindsym $mod+d exec playerctl next
 bindsym $mod+s exec playerctl play-pause
 
+# Discord
+bindsym $mod+z exec discord-canary
+
 ### Window Rules
 #
 # Appearance
