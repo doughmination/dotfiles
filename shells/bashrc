@@ -98,10 +98,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # local bin (ported from zsh)
 export PATH="$HOME/.local/bin:$PATH"
 
-# Load a venv, letting oh-my-posh own the prompt instead of the venv prefix
-export VIRTUAL_ENV_DISABLE_PROMPT=1
-source ~/venv/bin/activate
-
 # Prompt (cyberpunk powerline), with a plain fallback if the binary is missing
 if command -v oh-my-posh >/dev/null 2>&1; then
     eval "$(oh-my-posh init bash --config ~/.config/omp/config.toml)"

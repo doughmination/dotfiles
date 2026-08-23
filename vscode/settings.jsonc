@@ -1,12 +1,7 @@
 {
-    // ==========================================
-    // Appearance
-    // ==========================================
-    "workbench.colorTheme": "Activate UMBRA protocol",
-    "workbench.iconTheme": "catppuccin-macchiato",
+    "workbench.iconTheme": "catppuccin-mocha",
     "window.zoomLevel": -1,
     "window.commandCenter": true,
-    "window.nativeTabs": true,
     // ==========================================
     // Files
     // ==========================================
@@ -133,4 +128,5 @@
         "editorBracketPairGuide.activeBackground6": "#9399B2"
     },
     "terminal.integrated.enableMultiLinePasteWarning": "never",
+    "workbench.colorTheme": "Activate UMBRA protocol",
 }
