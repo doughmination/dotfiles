@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# arch-setup.sh
+# artix-setup.sh
+#
+# Ported from arch-setup.sh. Artix has no systemd, so everything that leaned on
+# systemd (service enabling, zram-generator, systemd-boot/UKI, the systemd user
+# session) has been reworked for runit + elogind + GRUB. See PORTING-NOTES.md.
 
 set -euo pipefail
 
@@ -8,6 +12,11 @@ warn() { printf '\033[1;33m[warn]\033[0m %s\n' "$*" >&2; }
 
 # Repo root, so copies work from any cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Where runit expects enabled services. current -> default on a stock Artix box.
+RUNIT_ENABLED_DIR="/etc/runit/runsvdir/default"
+# Where service definitions live
+RUNIT_SV_DIR="/etc/runit/sv"
 
 FONT_ZIPS=(
   "ComicCode|https://m.doughmination.gay/zip?path=f%2FComic-Code%2Fotf"
@@ -23,18 +32,30 @@ GIT_USER_NAME="${GIT_USER_NAME:-Clove Twilight}"
 GIT_USER_EMAIL="${GIT_USER_EMAIL:-admin@doughmination.win}"
 
 PACMAN_PKGS=(
+  # init system — the whole reason this is a separate script. runit supervises,
+  # elogind gives seats/sessions (sway, sddm, polkit, brightnessctl all need it),
+  # dbus-runit provides the system bus service.
+  runit
+  elogind
+  elogind-runit
+  dbus-runit
+
   # base system / firmware / boot
   amd-ucode
   base
   base-devel
   efibootmgr
+  grub                # replaces systemd-boot: Artix has no bootctl
   linux
   linux-firmware
   mkinitcpio
   plymouth
   sbctl
   sudo
-  zram-generator
+
+  # periodic maintenance — replaces the systemd fstrim.timer
+  cronie
+  cronie-runit
 
   # hardware / graphics
   intel-media-driver
@@ -51,16 +72,20 @@ PACMAN_PKGS=(
   xorg-xinit
   xorg-xwayland
 
-  # networking — bluez is the daemon; bluez-utils is only the CLI tools
+  # networking — bluez is the daemon; bluez-utils is only the CLI tools.
+  # The *-runit packages carry the runit service definitions Artix splits out.
   bind
   blueman
   bluez
+  bluez-runit
   bluez-utils
   iwd
   network-manager-applet
   networkmanager
+  networkmanager-runit
   nmap
   openssh
+  openssh-runit
   wireless_tools
   wpa_supplicant
 
@@ -86,7 +111,8 @@ PACMAN_PKGS=(
   xdg-desktop-portal-wlr
   xdg-utils
 
-  # audio — pipewire alone ships no SPA backends, so no sinks at all
+  # audio — pipewire alone ships no SPA backends, so no sinks at all.
+  # Without a systemd user session these are launched from the sway config.
   alsa-utils
   pavucontrol
   pipewire
@@ -165,16 +191,20 @@ PACMAN_PKGS=(
   steam
   vlc
 
-  # display manager — the qt deps back the theme's BackgroundVideo.qml
+  # display manager — the qt deps back the theme's BackgroundVideo.qml.
+  # sddm-runit carries the runit service; sddm alone would never start.
   qt5-graphicaleffects
   qt5-quickcontrols2
   qt6-5compat
   qt6-multimedia
   qt6-multimedia-ffmpeg
   sddm
+  sddm-runit
 )
 
-# yay and oh-my-posh are absent on purpose — installYay and setupOhMyPosh
+# yay and oh-my-posh are absent on purpose — installYay and setupOhMyPosh.
+# swayfx is absent on purpose too — its AUR PKGBUILD hardcodes libsystemd, so it
+# gets its own elogind-patched build in installSwayfx.
 AUR_PKGS=(
   archy-screenshot
   caelestia-cli
@@ -184,18 +214,23 @@ AUR_PKGS=(
   equicord-installer-bin
   git-credential-manager
   git-credential-manager-extras
-  swayfx
   vscodium-bin
   zen-browser-bin
 )
 
-# Only these need enabling; everything else is preset-enabled by its package.
-SYSTEM_UNITS=(
-  NetworkManager.service
-  fstrim.timer
-  iwd.service
-  sddm.service
-  sshd.service
+# runit service directories to enable (symlink into the runsvdir default dir).
+# On Arch most of these were preset-enabled by their package or systemd targets;
+# on Artix every one is opt-in. 'zram' is our own service (see setupZram).
+RUNIT_SERVICES=(
+  dbus            # system bus — pulled in implicitly by systemd on Arch
+  elogind         # seats/sessions for sway, sddm, polkit, brightnessctl
+  NetworkManager
+  iwd
+  bluetoothd      # blueman/bluetoothctl need this; was preset-enabled on Arch
+  sshd
+  cronie          # runs the fstrim cron job below
+  sddm
+  zram
 )
 
 # Reads from /dev/tty so a piped `curl … | bash` run still reaches the keyboard.
@@ -353,6 +388,30 @@ setupDotfiles() {
   unset -f backup
 }
 
+# swayfx does not ship a wayland-session entry on Artix (on Arch the sway package
+# provided one), so without this SDDM offers no Sway session and drops you into
+# whatever the base install shipped (LXQt). Launching via dbus-run-session also
+# gives the session the D-Bus bus the keyring/GCM need — see PORTING-NOTES.
+setupSwaySession() {
+  log "Installing the Sway wayland-session entry"
+
+  # swayfx installs its binary as `sway`; fall back to `swayfx` just in case.
+  local swayBin="sway"
+  command -v sway >/dev/null 2>&1 || swayBin="swayfx"
+  if ! command -v "$swayBin" >/dev/null 2>&1; then
+    warn "no sway/swayfx binary found — is swayfx installed? installing the session entry anyway"
+  fi
+
+  sudo install -d /usr/share/wayland-sessions
+  sudo install -Dm644 /dev/stdin /usr/share/wayland-sessions/sway.desktop <<EOF
+[Desktop Entry]
+Name=Sway
+Comment=SwayFX Wayland compositor
+Exec=dbus-run-session $swayBin
+Type=Application
+EOF
+}
+
 # Takes effect on next login; restarting sddm here would kill your session.
 setupSddmTheme() {
   local themeName="pixel-night-city"
@@ -425,17 +484,57 @@ setupLocale() {
   cp "$sourceDir/plasma-localerc" "$HOME/.config/plasma-localerc"
 }
 
-# Needed for steam's 32-bit deps
-enableMultilib() {
-  if grep -q '^\[multilib\]' /etc/pacman.conf; then
-    log "multilib already enabled — skipping"
-    return
+# Artix ships its own repos and, separately, opt-in access to Arch's. steam's
+# 32-bit deps need lib32 (Artix) / multilib (Arch); most AUR builds pull from
+# Arch's [extra], so we enable Arch support too. Replaces enableMultilib.
+enableRepos() {
+  log "Enabling Artix lib32/universe/galaxy repositories"
+
+  # These ship commented in the stock /etc/pacman.conf. Uncomment the [repo]
+  # header and its immediate Include line, idempotently.
+  local repo
+  for repo in lib32 universe galaxy; do
+    if grep -qE "^\[$repo\]" /etc/pacman.conf; then
+      log "[$repo] already enabled — skipping"
+      continue
+    fi
+    log "Enabling [$repo]"
+    sudo sed -i "/^#\s*\[$repo\]/,/^#\s*Include/ s/^#\s*//" /etc/pacman.conf
+  done
+
+  # Arch upstream repos: needed by most AUR packages (they build against [extra])
+  # and by any package only Arch ships. artix-archlinux-support drops in the
+  # keyring + a pacman-conf.d include mechanism.
+  if ! pacman -Q artix-archlinux-support &>/dev/null; then
+    log "Installing artix-archlinux-support (Arch [extra]/[multilib] access)"
+    sudo pacman -Sy --needed --noconfirm artix-archlinux-support
   fi
 
-  log "Enabling multilib repository"
+  # Arch mirrorlist for the upstream repos
+  if [[ ! -s /etc/pacman.d/mirrorlist-arch ]]; then
+    warn "no /etc/pacman.d/mirrorlist-arch — you may need pacman-mirrorlist-arch"
+  fi
 
-  # DBs get synced by the -Syu in installPackages
-  sudo sed -i '/^#\s*\[multilib\]/,/^#\s*Include/ s/^#\s*//' /etc/pacman.conf
+  # Append the Arch repo stanzas once, after the Artix ones.
+  if ! grep -qE '^\[extra\]' /etc/pacman.conf; then
+    log "Adding Arch [extra] and [multilib] repositories"
+    sudo tee -a /etc/pacman.conf > /dev/null <<'EOF'
+
+# --- Arch upstream (added by artix-setup.sh) ---
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist-arch
+EOF
+  else
+    log "Arch [extra] already present — skipping"
+  fi
+
+  log "Populating the Arch keyring"
+  sudo pacman-key --populate archlinux || warn "pacman-key populate archlinux failed"
+
+  # DBs get a full sync here; installPackages does the -Syu
   sudo pacman -Sy
 }
 
@@ -459,6 +558,36 @@ installYay() {
   fi
 
   ( cd "$buildDir" && makepkg -si --noconfirm )
+}
+
+# swayfx's AUR PKGBUILD builds with -Dsd-bus-provider=libsystemd, which does not
+# exist on Artix, so a plain `yay -S swayfx` dies at meson with
+# 'Dependency "libsystemd" not found'. sway/swayfx support elogind's libelogind
+# instead (this is how the Artix `sway` package is built), so we fetch the
+# PKGBUILD, swap that one flag, and build it ourselves.
+installSwayfx() {
+  if pacman -Q swayfx &>/dev/null; then
+    log "swayfx already installed — skipping"
+    return
+  fi
+
+  log "Building swayfx against libelogind (Artix has no libsystemd)"
+
+  local buildDir="$HOME/swayfx-build"
+  if [[ -d "$buildDir/.git" ]]; then
+    git -C "$buildDir" pull --ff-only || true
+  else
+    rm -rf "$buildDir"
+    git clone https://aur.archlinux.org/swayfx.git "$buildDir"
+  fi
+
+  # The load-bearing one-line fix.
+  sed -i 's/-Dsd-bus-provider=libsystemd/-Dsd-bus-provider=libelogind/' "$buildDir/PKGBUILD"
+
+  if ! ( cd "$buildDir" && makepkg -si --needed --noconfirm ); then
+    warn "swayfx build failed — you'll have no Sway compositor until it's fixed"
+    warn "inspect the meson error under $buildDir/src/build/meson-logs/"
+  fi
 }
 
 setupNode() {
@@ -679,39 +808,139 @@ setupGit() {
   done
 }
 
-# zram-generator ships no /etc config, so without this the package is inert.
+# On Arch this was a systemd-generator config. Artix has no systemd, so we ship a
+# small runit service (system/runit/zram) that sets up the device at boot and
+# tears it down on stop. Enabled in enableServices via the RUNIT_SERVICES list.
 setupZram() {
-  local sourceFile="$SCRIPT_DIR/system/zram-generator.conf"
-  local destination="/etc/systemd/zram-generator.conf"
+  local sourceDir="$SCRIPT_DIR/system/runit/zram"
+  local destination="$RUNIT_SV_DIR/zram"
 
-  log "Configuring zram swap"
+  log "Installing zram runit service"
 
-  if [[ -e "$destination" ]] && ! cmp -s "$sourceFile" "$destination"; then
-    local backupDestination="$destination.bak-$(date +%Y%m%d-%H%M%S)"
-    warn "backing up existing $destination -> $backupDestination"
-    sudo cp "$destination" "$backupDestination"
-  fi
-
-  sudo install -Dm644 "$sourceFile" "$destination"
+  sudo install -d "$destination"
+  sudo install -Dm755 "$sourceDir/run"    "$destination/run"
+  sudo install -Dm755 "$sourceDir/finish" "$destination/finish"
 }
 
-# Enable only — starting sddm here would kill the session running this.
-enableServices() {
-  ((${#SYSTEM_UNITS[@]})) || return 0
+# Adds a weekly fstrim, replacing the systemd fstrim.timer. cronie runs it.
+setupFstrimCron() {
+  log "Installing weekly fstrim cron job"
+  sudo install -Dm755 /dev/stdin /etc/cron.weekly/fstrim <<'EOF'
+#!/bin/sh
+# Weekly discard of unused blocks on all mounted, trim-capable filesystems.
+exec /usr/bin/fstrim --all --quiet-unsupported
+EOF
+}
 
-  log "Enabling system services"
-  sudo systemctl enable "${SYSTEM_UNITS[@]}"
+# runit "enable" is a symlink into the runsvdir default dir. Services come up on
+# the next boot — which is exactly what we want: sddm can't be started here (it
+# would kill this session), and main() ends by telling you to reboot.
+enableServices() {
+  ((${#RUNIT_SERVICES[@]})) || return 0
+
+  log "Enabling runit services"
+
+  local svc
+  for svc in "${RUNIT_SERVICES[@]}"; do
+    if [[ ! -d "$RUNIT_SV_DIR/$svc" ]]; then
+      warn "no service definition at $RUNIT_SV_DIR/$svc — is its *-runit package installed? skipping"
+      continue
+    fi
+
+    if [[ -L "$RUNIT_ENABLED_DIR/$svc" ]]; then
+      log "$svc already enabled — skipping"
+      continue
+    fi
+
+    sudo ln -s "$RUNIT_SV_DIR/$svc" "$RUNIT_ENABLED_DIR/$svc"
+    log "enabled $svc"
+  done
+}
+
+# pacman won't auto-remove a conflicting package under --noconfirm (it takes the
+# safe default and aborts the whole transaction). Two flavours of clash show up
+# on Artix, resolved in opposite directions:
+#
+# 1. OBSOLETE_PKGS — an installed package is superseded by one we want. Remove
+#    the old one (its replacement is in PACMAN_PKGS).
+OBSOLETE_PKGS=(
+  exfat-utils   # superseded by exfatprogs
+)
+
+# 2. PROVIDER_VARIANTS — an installed variant already satisfies a package we
+#    list, and is the one to keep. Drop our generic name from the install set so
+#    we don't try to replace the better variant. Format "generic:installed-variant".
+#    Artix ships enhanced xorg-server/mesa builds that 'provide' the stock names.
+PROVIDER_VARIANTS=(
+  "xorg-server:xorg-server-tearfree"
+)
+
+# Build the effective install list: PACMAN_PKGS minus any generic whose preferred
+# variant is already installed. Result lands in EFFECTIVE_PKGS.
+filterProviderVariants() {
+  local -A drop=()
+  local pair generic variant
+  for pair in "${PROVIDER_VARIANTS[@]}"; do
+    generic="${pair%%:*}"
+    variant="${pair#*:}"
+    if pacman -Q "$variant" &>/dev/null; then
+      drop["$generic"]=1
+      log "keeping installed $variant — dropping $generic from the install list"
+    fi
+  done
+
+  EFFECTIVE_PKGS=()
+  local pkg
+  for pkg in "${PACMAN_PKGS[@]}"; do
+    [[ -n "${drop[$pkg]:-}" ]] && continue
+    EFFECTIVE_PKGS+=("$pkg")
+  done
+}
+
+removeObsoletePackages() {
+  local obsolete toRemove=()
+
+  for obsolete in "${OBSOLETE_PKGS[@]}"; do
+    if pacman -Q "$obsolete" &>/dev/null; then
+      toRemove+=("$obsolete")
+    fi
+  done
+
+  ((${#toRemove[@]})) || return 0
+
+  log "Removing superseded packages that would block the install: ${toRemove[*]}"
+  # -dd: skip dependency checks — these have no reverse deps, and their
+  # replacements are about to be installed in the same run.
+  sudo pacman -Rdd --noconfirm "${toRemove[@]}"
 }
 
 installPackages() {
-  if ((${#PACMAN_PKGS[@]})); then
+  removeObsoletePackages
+  filterProviderVariants
+
+  if ((${#EFFECTIVE_PKGS[@]})); then
     log "Refreshing, upgrading, and installing pacman packages"
-    sudo pacman -Syu --needed --noconfirm "${PACMAN_PKGS[@]}"
+    sudo pacman -Syu --needed --noconfirm "${EFFECTIVE_PKGS[@]}"
   fi
 
   if ((${#AUR_PKGS[@]})); then
     log "Installing AUR packages"
-    yay -S --needed --noconfirm "${AUR_PKGS[@]}"
+
+    # One at a time, and never let a single failed build abort the whole run
+    # (which is exactly what a batch `yay -S ...` under `set -e` would do). A bad
+    # AUR build should cost you that one package, not the rest of the setup.
+    local pkg aurFailed=()
+    for pkg in "${AUR_PKGS[@]}"; do
+      if ! yay -S --needed --noconfirm "$pkg"; then
+        warn "AUR package failed to build/install: $pkg — continuing"
+        aurFailed+=("$pkg")
+      fi
+    done
+
+    if ((${#aurFailed[@]})); then
+      warn "these AUR packages did NOT install: ${aurFailed[*]}"
+      warn "re-run 'yay -S <pkg>' by hand to see the build error"
+    fi
   fi
 }
 
@@ -727,44 +956,26 @@ backupIfDiffers() {
   sudo cp "$destination" "$backupDestination"
 }
 
+# Arch built a signed UKI and let systemd-boot load it. mkinitcpio's UKI mode
+# needs the EFI stub shipped by the systemd package, which does not exist on
+# Artix — so we boot a plain initramfs through GRUB instead, and reproduce the
+# silent graphical boot with a hidden GRUB timeout + plymouth. See PORTING-NOTES.
 setupSilentBoot() {
   local sourceDir="$SCRIPT_DIR/system/boot"
 
-  log "Configuring silent graphical boot"
+  log "Configuring silent graphical boot (GRUB + plymouth)"
 
-  # Params live inside the UKI, so loader entries are not involved
-  if [[ ! -d /boot/EFI/Linux ]]; then
-    warn "no UKI directory at /boot/EFI/Linux — skipping boot config"
+  # Where the ESP is mounted. The original repo used /boot as the ESP.
+  local espDir="/boot"
+  if [[ ! -d "$espDir/EFI" ]]; then
+    warn "no EFI dir under $espDir — is the ESP mounted at $espDir? skipping boot config"
     return
   fi
 
-  # root= is per-disk, so read it live rather than trust the backed-up value
-  local rootPartUuid
-  local rootFsType
-  rootPartUuid="$(findmnt -no PARTUUID /)"
-  rootFsType="$(findmnt -no FSTYPE /)"
-
-  if [[ -z "$rootPartUuid" ]]; then
-    warn "could not read the root PARTUUID — skipping boot config"
-    return
-  fi
-
-  local generatedCmdline
-  generatedCmdline="$(mktemp)"
-
-  awk -v uuid="$rootPartUuid" -v fstype="$rootFsType" '
-    {
-      for (i = 1; i <= NF; i++) {
-        if ($i ~ /^root=/)            $i = "root=PARTUUID=" uuid
-        else if ($i ~ /^rootfstype=/) $i = "rootfstype=" fstype
-      }
-      print
-    }
-  ' "$sourceDir/cmdline" > "$generatedCmdline"
-
-  backupIfDiffers "$generatedCmdline" /etc/kernel/cmdline
-  sudo install -Dm644 "$generatedCmdline" /etc/kernel/cmdline
-  rm -f "$generatedCmdline"
+  # Standard initramfs preset (no UKI). Package default is already this shape;
+  # we install ours to be explicit and reproducible.
+  backupIfDiffers "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
+  sudo install -Dm644 "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
 
   backupIfDiffers "$sourceDir/mkinitcpio.conf" /etc/mkinitcpio.conf
   sudo install -Dm644 "$sourceDir/mkinitcpio.conf" /etc/mkinitcpio.conf
@@ -772,20 +983,39 @@ setupSilentBoot() {
   backupIfDiffers "$sourceDir/plymouthd.conf" /etc/plymouth/plymouthd.conf
   sudo install -Dm644 "$sourceDir/plymouthd.conf" /etc/plymouth/plymouthd.conf
 
-  backupIfDiffers "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
-  sudo install -Dm644 "$sourceDir/linux.preset" /etc/mkinitcpio.d/linux.preset
-
-  # The ESP is vfat, so copy without trying to set a mode
-  if [[ -d /boot/loader ]]; then
-    backupIfDiffers "$sourceDir/loader.conf" /boot/loader/loader.conf
-    sudo cp "$sourceDir/loader.conf" /boot/loader/loader.conf
-  fi
-
-  log "Rebuilding the unified kernel image"
+  log "Rebuilding the initramfs"
   sudo mkinitcpio -P
 
-  # The EFI variable overrides loader.conf, so set both
-  sudo bootctl set-timeout 0
+  # GRUB reads its kernel params from /etc/default/grub. We keep the silent-boot
+  # flags but drop the systemd-only ones (systemd.show_status) and the root=/
+  # rootfstype= pins — grub-mkconfig detects the root device itself.
+  local cmdline="quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0 zswap.enabled=0"
+
+  log "Writing silent-boot flags to /etc/default/grub"
+  sudo cp /etc/default/grub "/etc/default/grub.bak-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+
+  setGrubKey() {
+    local key="$1" value="$2"
+    if grep -qE "^#?\s*$key=" /etc/default/grub; then
+      sudo sed -i "s|^#\?\s*$key=.*|$key=$value|" /etc/default/grub
+    else
+      printf '%s=%s\n' "$key" "$value" | sudo tee -a /etc/default/grub > /dev/null
+    fi
+  }
+
+  setGrubKey GRUB_TIMEOUT 0
+  setGrubKey GRUB_TIMEOUT_STYLE hidden
+  setGrubKey GRUB_CMDLINE_LINUX_DEFAULT "\"$cmdline\""
+  unset -f setGrubKey
+
+  # Install GRUB to the ESP if it is not already there, then generate its config.
+  if [[ ! -d "$espDir/grub" ]]; then
+    log "Installing GRUB to the ESP"
+    sudo grub-install --target=x86_64-efi --efi-directory="$espDir" --bootloader-id=Artix
+  fi
+
+  log "Generating GRUB config"
+  sudo grub-mkconfig -o "$espDir/grub/grub.cfg"
 }
 
 main() {
@@ -796,14 +1026,24 @@ main() {
   git lfs pull
   promptIdentity
   configureSudo
-  enableMultilib
+  enableRepos
   installYay
   installPackages
+  installSwayfx
+
+  # System + login-critical first, so a failure in the fragile user-tooling
+  # steps below (nvm/bun/omp curl installs, AUR patches) can't leave you at a
+  # broken login. These are the pieces that decide whether you boot into Sway.
   setupLocale
   setupZram
-  setupNode
+  setupFstrimCron
   setupSilentBoot
   enableServices
+  setupSwaySession
+  setupSddmTheme
+
+  # User environment / dotfiles — nice to have, but non-fatal if one trips.
+  setupNode
   setupGit
   setupOhMyPosh
   setupBun
@@ -813,9 +1053,9 @@ main() {
   setupWallpaper
   setupDotfiles
   setupCaelestia
-  setupSddmTheme
 
   log "Done. Reboot to pick up the new services, locale and prompt."
+  log "At the SDDM greeter, pick the 'Sway' session (it is remembered after the first login)."
 }
 
 main "$@"
