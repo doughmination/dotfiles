@@ -627,7 +627,11 @@ setupOhMyPosh() {
 
   log "Installing oh-my-posh"
   mkdir -p "$installDir"
-  curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "$installDir"
+  # Guarded: under set -e, an unguarded curl|bash here would kill the rest of
+  # the script (setupFonts included) on any transient network hiccup.
+  if ! curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "$installDir"; then
+    warn "oh-my-posh install failed — skipping (re-run setupOhMyPosh later)"
+  fi
 }
 
 # Installs to ~/.bun; both shell rc files already put ~/.bun/bin on PATH
@@ -639,7 +643,9 @@ setupBun() {
   fi
 
   log "Installing bun"
-  curl -fsSL https://bun.com/install | bash
+  if ! curl -fsSL https://bun.com/install | bash; then
+    warn "bun install failed — skipping (re-run setupBun later)"
+  fi
 }
 
 # PEP 668 refuses pip outside a venv. Path must match bashrc's activate line.

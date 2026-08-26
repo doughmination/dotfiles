@@ -10,8 +10,21 @@ include cyberpunk
 exec_always --no-startup-id ~/.local/bin/caelestia-reload
 exec --no-startup-id autotiling
 
+# PipeWire + WirePlumber. The pipewire.desktop XDG autostart entry in
+# ~/.config/autostart/ never fires: that's a DE session-manager feature and
+# nothing here (no dex, no systemd user session) processes that directory,
+# so audio - and bluetooth audio (a2dp-sink needs WirePlumber's endpoint) -
+# silently never started at all.
+exec --no-startup-id /usr/bin/artix-pipewire-launcher
+
 # Polkit authentication agent (needed for fprintd enroll, udisks, etc.)
 exec --no-startup-id /usr/lib/polkit-kde-authentication-agent-1
+
+# Secret service (GCM's credentialStore=secretservice needs this running).
+# Not left to sddm's pam_gnome_keyring: fprintd is `sufficient` ahead of the
+# password stack in /etc/pam.d/sddm, so a fingerprint login short-circuits
+# auth before pam_gnome_keyring ever runs, and the daemon never starts.
+exec --no-startup-id gnome-keyring-daemon --start --components=secrets,ssh,pkcs11
 
 # Clipboard history (text + images)
 exec --no-startup-id wl-paste --type text --watch cliphist store
